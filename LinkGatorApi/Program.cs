@@ -1,11 +1,14 @@
+using LinkGatorApi;
 using LinkGatorApi.Queries;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("MySuperSecretKey"));
+var config = builder.Configuration;
+var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Auth:SigningKey"]));
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -13,7 +16,7 @@ builder.Services
         options.TokenValidationParameters =
             new TokenValidationParameters
             {
-                ValidIssuer = "https://localhost:7292/graphql",
+                ValidIssuer = $"{config["Urls"]}/graphql",
                 ValidateIssuerSigningKey = true,
                 ValidateIssuer = true,
                 ValidateAudience = false,
@@ -30,6 +33,12 @@ builder.Services
     .AddQueryType<AuthQueries>()
     .AddMutationType<AuthMutations>();
 
+builder.Services
+    .AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseNpgsql(config["Database:ConnectionString"]);
+    });
+
 var app = builder.Build();
 
 app.UseRouting();
@@ -37,12 +46,7 @@ app.UseRouting();
 app.UseAuthorization();
 app.UseAuthentication();
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapGraphQL();
-});
-
-//app.MapGraphQL();
+app.MapGraphQL();
 
 app.MapGet("/", () => "Hello World!");
 

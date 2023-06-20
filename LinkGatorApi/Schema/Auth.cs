@@ -18,17 +18,25 @@ namespace LinkGatorApi.Queries
 
     public class AuthMutations
     {
+        private readonly IConfiguration _config;
+
+        public AuthMutations(IConfiguration config)
+        {
+            _config = config;
+        }
+
         [GraphQLDescription("Create an auth token")]
         public async Task<string> CreateAuthToken()
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("MySuperSecretKey"));
+            // Should check if a signing key is available, and return an error if not
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Auth:SigningKey"]));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, "wethegreenpeople"),
                 new Claim(ClaimTypes.Role, "Admin")
             };
-            var token = new JwtSecurityToken("https://localhost:7292/graphql",
+            var token = new JwtSecurityToken($"{_config["Urls"]}/graphql",
                 null,
                 claims,
                 expires: DateTime.Now.AddMinutes(15),
