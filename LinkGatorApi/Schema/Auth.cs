@@ -1,12 +1,14 @@
 ﻿using HotChocolate.Authorization;
+using LinkGatorApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using fr = FluentResults;
 
 namespace LinkGatorApi.Queries
 {
-    [Authorize]
+    [Authorize(Roles = new []{"Admin"})]
     public class AuthQueries
     {
         [GraphQLDescription("Gets an auth token associated with the user")]
@@ -26,24 +28,37 @@ namespace LinkGatorApi.Queries
         }
 
         [GraphQLDescription("Create an auth token")]
-        public async Task<string> CreateAuthToken()
+        public async Task<ResultDto<AuthResponse>> CreateAuthToken()
         {
-            // Should check if a signing key is available, and return an error if not
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Auth:SigningKey"]));
+            var signingKey = _config.GetValue<string>("Auth:SigningKey");
+            if (signingKey.IsNullOrEmpty()) return fr.Result.Fail("Invalid Configuration").ToResultDto<AuthResponse>();
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, "wethegreenpeople"),
                 new Claim(ClaimTypes.Role, "Admin")
             };
-            var token = new JwtSecurityToken($"{_config["Urls"]}/graphql",
-                null,
+
+
+            var accessToken = new JwtSecurityToken($"{_config["Urls"]}/graphql",
+                "ACCESS",
                 claims,
                 expires: DateTime.Now.AddMinutes(15),
                 signingCredentials: credentials);
+            var refreshToken = new JwtSecurityToken($"{_config["Urls"]}/graphql",
+                "REFRESH",
+                null,
+                expires: DateTime.Now.AddDays(7),
+                signingCredentials: credentials);
 
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            var authResponse = new AuthResponse()
+            {
+                AccessToken = new JwtSecurityTokenHandler().WriteToken(accessToken),
+                RefreshToken = new JwtSecurityTokenHandler().WriteToken(refreshToken),
+            };
+            return fr.Result.Ok(authResponse).ToResultDto();
         }
     }
 }
