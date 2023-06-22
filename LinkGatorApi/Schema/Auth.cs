@@ -12,7 +12,7 @@ using SchemaUser = LinkGatorApi.Schema.User;
 
 namespace LinkGatorApi.Queries
 {
-    [Authorize(Roles = new []{"Admin"})]
+    [Authorize]
     public class AuthQueries
     {
         [AllowAnonymous]
