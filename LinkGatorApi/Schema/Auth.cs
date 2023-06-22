@@ -15,12 +15,6 @@ namespace LinkGatorApi.Queries
     [Authorize(Roles = new []{"Admin"})]
     public class AuthQueries
     {
-        [GraphQLDescription("Gets an auth token associated with the user")]
-        public string GetAuthToken()
-        {
-            return "doot";
-        }
-
         [AllowAnonymous]
         [GraphQLDescription("Signs a user in, with a given username and password")]
         public async Task<ResultDto<AuthResponse>> SignIn(string username, string password, [Service] SignInManager<User> signInManager, [Service] IConfiguration config)
