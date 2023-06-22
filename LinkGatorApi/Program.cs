@@ -1,7 +1,11 @@
 using LinkGatorApi;
+using LinkGatorApi.Models;
 using LinkGatorApi.Queries;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -10,9 +14,16 @@ var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
 var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["Auth:SigningKey"]));
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(s =>
+    {
+        s.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        s.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        s.DefaultSignInScheme = "Identity.Application";
+    })
+    .AddCookie("Identity.Application")
     .AddJwtBearer(options =>
     {
+        options.SaveToken = true;
         options.TokenValidationParameters =
             new TokenValidationParameters
             {
@@ -38,6 +49,11 @@ builder.Services
     {
         options.UseNpgsql(config["Database:ConnectionString"]);
     });
+
+builder.Services
+    .AddIdentityCore<User>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager<SignInManager<User>>();
 
 var app = builder.Build();
 
