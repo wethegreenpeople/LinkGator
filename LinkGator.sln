@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33801.468
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinkGatorApi", "LinkGatorApi\LinkGatorApi.csproj", "{1F2E5846-A074-4B2B-B088-7544B7B40436}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinkGatorApi", "LinkGatorApi\LinkGatorApi.csproj", "{1F2E5846-A074-4B2B-B088-7544B7B40436}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LinkGatorApiTests", "LinkGatorApiTests\LinkGatorApiTests.csproj", "{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinkGatorApiTests", "LinkGatorApiTests\LinkGatorApiTests.csproj", "{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActivityPub", "ActivityPub.Net\ActivityPub.csproj", "{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

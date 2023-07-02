@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\ActivityPub.Net\ActivityPub.csproj" />
   </ItemGroup>
 
 </Project>

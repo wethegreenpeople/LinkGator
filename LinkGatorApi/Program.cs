@@ -55,6 +55,8 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager<SignInManager<User>>();
 
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
 app.UseRouting();
@@ -65,6 +67,7 @@ app.UseAuthentication();
 app.MapGraphQL();
 
 app.MapGet("/", () => "Hello World!");
+app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
