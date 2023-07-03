@@ -1,16 +1,28 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ActivityPub;
 using LinkGatorApi.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace LinkGatorApi.Controllers
 {
     [Route(".well-known")]
     public class WellknownController : Controller
     {
+        private readonly IUserStore<User> _userStore;
+        public WellknownController(IUserStore<User> userStore)
+        {
+            _userStore = userStore;
+        }
+
         [HttpGet("webfinger")]
-        public IActionResult GetResource([FromQuery] string resource)
+        public async Task<IActionResult> GetResource([FromQuery] string resource)
         {
             if (!resource.ToLower().StartsWith("acct:")) return BadRequest();
+
+            var userNameFromResource = resource[5..];
+            var user = await _userStore.FindByNameAsync(userNameFromResource.ToUpper(), CancellationToken.None);
+
+            if (user == null) return NotFound();
 
             var webFingerObject = new WebFingerResponse()
             {
@@ -21,7 +33,7 @@ namespace LinkGatorApi.Controllers
                     {
                         Rel = "self",
                         Type = "application/activity+json",
-                        Href = $"{Request.Scheme}://{Request.Host}/user/{resource[5..]}"
+                        Href = $"{Request.Scheme}://{Request.Host}/user/{user.UserName}"
                     }
                 }
             };
