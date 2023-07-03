@@ -15,7 +15,7 @@ namespace LinkGatorApi.Controllers
         }
 
         [HttpGet("webfinger")]
-        public async Task<IActionResult> GetResource([FromQuery] string resource)
+        public async Task<ActionResult<WebFingerResponse>> GetResource([FromQuery] string resource)
         {
             if (!resource.ToLower().StartsWith("acct:")) return BadRequest();
 
