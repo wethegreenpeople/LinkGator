@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinkGatorApi", "LinkGatorAp
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LinkGatorApiTests", "LinkGatorApiTests\LinkGatorApiTests.csproj", "{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ActivityPub", "ActivityPub.Net\ActivityPub.csproj", "{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActivityPub", "ActivityPub.Net\ActivityPub.csproj", "{0D62D46C-9DDA-4445-A5F8-B06610A6052C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6AE9D89F-72EC-4EED-A22C-26A5480BD7C0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C01952A8-F7BA-4EBC-9C7F-5EDD3941EE86}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D62D46C-9DDA-4445-A5F8-B06610A6052C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D62D46C-9DDA-4445-A5F8-B06610A6052C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D62D46C-9DDA-4445-A5F8-B06610A6052C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D62D46C-9DDA-4445-A5F8-B06610A6052C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

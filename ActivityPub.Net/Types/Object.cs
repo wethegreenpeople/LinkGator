@@ -14,7 +14,7 @@ namespace ActivityPub {
   /// 
   /// https://www.w3.org/ns/activitystreams#Object
   /// </summary>
-  public class Object : Entity {
+  public class ActivityObject : Entity {
 
     /// <summary>
     /// The default type for an object
@@ -495,7 +495,7 @@ namespace ActivityPub {
     /// <summary>
     /// Make an Object
     /// </summary>
-    public Object() 
+    public ActivityObject() 
       : base() {}
   }
 }

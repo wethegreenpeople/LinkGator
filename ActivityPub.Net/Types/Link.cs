@@ -131,7 +131,7 @@ namespace ActivityPub {
     /// <summary>
     /// A cache for the internal Object represented by the link.
     /// </summary>
-    protected Object _object;
+    protected ActivityObject _object;
 
     /// <summary>
     /// Make a new Link.
@@ -165,20 +165,20 @@ namespace ActivityPub {
     /// Get this link as the object it represents
     /// </summary>
     /// <returns></returns>
-    public Object asObject()
+    public ActivityObject asObject()
       => _object ??= FetchObject(Href);
 
     /// <summary>
     /// Get the object from this link
     /// </summary>
     /// <param name="link"></param>
-    public static implicit operator Object(Link link)
+    public static implicit operator ActivityObject(Link link)
       => link.asObject();
 
     /// <summary>
     /// Fetch an object from it's link
     /// </summary>
-    public static Object FetchObject(string href) {
+    public static ActivityObject FetchObject(string href) {
       throw new System.NotImplementedException();
     }
   }

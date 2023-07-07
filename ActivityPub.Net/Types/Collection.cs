@@ -2,7 +2,7 @@
 using System.Linq;
 
 namespace ActivityPub {
-  public class Collection : Object {
+  public class Collection : ActivityObject {
 
     public override IEnumerable<string> DefaultTypes
       => new[] {

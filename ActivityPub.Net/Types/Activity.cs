@@ -15,7 +15,7 @@ namespace ActivityPub {
   /// 
   /// https://www.w3.org/ns/activitystreams#Activity
   /// </summary>
-  public class Activity : Object {
+  public class Activity : ActivityObject {
 
     public override IEnumerable<string> DefaultTypes 
       => new[] {

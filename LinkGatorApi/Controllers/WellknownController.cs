@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ActivityPub;
 using LinkGatorApi.Models;
 using Microsoft.AspNetCore.Identity;
 
@@ -27,9 +26,9 @@ namespace LinkGatorApi.Controllers
             var webFingerObject = new WebFingerResponse()
             {
                 Subject = resource,
-                Links = new List<Link>()
+                Links = new List<object>()
                 {
-                    new Link()
+                    new
                     {
                         Rel = "self",
                         Type = "application/activity+json",

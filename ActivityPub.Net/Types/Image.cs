@@ -6,7 +6,7 @@ namespace ActivityPub {
   /// <summary>
   /// An object representing an image
   /// </summary>
-  public class Image : Object {
+  public class Image : ActivityObject {
 
     [JsonIgnore]
     public override IEnumerable<string> DefaultTypes 

@@ -8,12 +8,12 @@ using System.Net;
 using System.Security.Claims;
 using System.Text;
 using fr = FluentResults;
-using SchemaUser = LinkGatorApi.Schema.User;
 
 namespace LinkGatorApi.Queries
 {
     [Authorize]
-    public class AuthQueries
+    [ExtendObjectType("Query")]
+    public partial class AuthQuery
     {
         [AllowAnonymous]
         [GraphQLDescription("Signs a user in, with a given username and password")]
@@ -59,7 +59,7 @@ namespace LinkGatorApi.Queries
 
         [AllowAnonymous]
         [GraphQLDescription("Creates a user with the given username and password")]
-        public async Task<ResultDto<SchemaUser>> CreateUser(string username, string password, [Service]IUserStore<User> userStore, [Service]UserManager<User> userManager)
+        public async Task<ResultDto<Person>> CreateUser(string username, string password, [Service]IUserStore<User> userStore, [Service]UserManager<User> userManager)
         {
             var user = new User();
             var emailUserStore = (IUserEmailStore<User>)userStore;
@@ -71,9 +71,9 @@ namespace LinkGatorApi.Queries
             if (!result?.Succeeded ?? true) 
                 return fr.Result.Fail("Could not create user")
                     .WithErrors(result.Errors.Select(s => s.Description.ToString()))
-                    .ToResultDto<SchemaUser>();
+                    .ToResultDto<Person>();
 
-            var schemaUser = new SchemaUser(user);
+            var schemaUser = new Person(user);
             return fr.Result.Ok(schemaUser).ToResultDto();
         }
     }

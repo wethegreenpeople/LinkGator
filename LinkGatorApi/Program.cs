@@ -1,11 +1,9 @@
 using LinkGatorApi;
 using LinkGatorApi.Models;
 using LinkGatorApi.Queries;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -41,7 +39,9 @@ builder.Services.AddAuthorization();
 builder.Services
     .AddGraphQLServer()
     .AddAuthorization()
-    .AddQueryType<AuthQueries>()
+    .AddQueryType(s => s.Name("Query"))
+        .AddTypeExtension<PersonQuery>()
+        .AddTypeExtension<AuthQuery>()
     .AddMutationType<AuthMutations>();
 
 builder.Services
@@ -66,7 +66,7 @@ app.UseAuthentication();
 
 app.MapGraphQL();
 
-app.MapGet("/", () => "Hello World!");
+app.MapGet("/", () => "Hello World!!");
 app.MapControllers();
 
 using (var scope = app.Services.CreateScope())

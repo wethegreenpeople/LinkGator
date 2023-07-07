@@ -78,7 +78,7 @@ namespace ActivityPub.Utilities.Json {
           = null;
         // if we didn't find any kind of type value
         if(foundType is null) {
-          objectTypes = new string[] { Object.DefaultType };
+          objectTypes = new string[] { ActivityObject.DefaultType };
         } // if the type is in an array:
         else if(typeTestReader.TokenType == JsonTokenType.StartArray) {
           var types = new List<string>();
@@ -105,7 +105,7 @@ namespace ActivityPub.Utilities.Json {
         }
 
         return @base // if null, try to make it into a generic Object:
-          ?? (JsonSerializer.Deserialize(ref reader, typeof(Object), options) as ActivityPub.Entity);
+          ?? (JsonSerializer.Deserialize(ref reader, typeof(ActivityObject), options) as ActivityPub.Entity);
       }
 
       public override void Write(Utf8JsonWriter writer, ActivityPub.Entity value, JsonSerializerOptions options) {
