@@ -36,10 +36,10 @@
 		}
 	},
 	// "portsAttributes": {
-	//		"5001": {
-	//			"protocol": "https"
-	//		}
-	// }
+	// 		"5000": {
+	// 			"protocol": "https"
+	// 		}
+	// },
 
     // Use 'postCreateCommand' to run commands after the container is created.
     "postCreateCommand": "dotnet dev-certs https",

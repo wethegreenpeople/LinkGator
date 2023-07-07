@@ -4,7 +4,6 @@ using LinkGatorApi.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Security.Claims;
 using System.Text;
 using fr = FluentResults;
@@ -75,42 +74,6 @@ namespace LinkGatorApi.Queries
 
             var schemaUser = new Person(user);
             return fr.Result.Ok(schemaUser).ToResultDto();
-        }
-    }
-
-    public static class AuthHelpers
-    {
-        public static string CreateAccessToken(string signingKey, string issuer)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, "wethegreenpeople"),
-                new Claim(ClaimTypes.Role, "User"),
-                new Claim(ClaimTypes.Role, "Admin"),
-            };
-
-            var token = new JwtSecurityToken(issuer,
-                "ACCESS",
-                claims,
-                expires: DateTime.Now.AddMinutes(15),
-                signingCredentials: credentials);
-            return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        public static string CreateRefreshToken(string signingKey, string issuer)
-        {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey));
-            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
-
-            var refreshToken = new JwtSecurityToken(issuer,
-                "REFRESH",
-                null,
-                expires: DateTime.Now.AddDays(7),
-                signingCredentials: credentials);
-
-            return new JwtSecurityTokenHandler().WriteToken(refreshToken);
         }
     }
 }
