@@ -3,6 +3,7 @@ import { configure, getConsoleSink } from "@logtape/logtape";
 import { createHandler, StartServer } from "@solidjs/start/server";
 
 await configure({
+  reset: true,
   sinks: { console: getConsoleSink() },
   filters: {},
   loggers: [
