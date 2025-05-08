@@ -1,16 +1,20 @@
+"use server"
+
 import { createMiddleware } from "@solidjs/start/middleware";
 import { type FetchEvent } from "@solidjs/start/server";
 import { Accept, createFederation, exportJwk, Federation, Follow, generateCryptoKeyPair, importJwk, MemoryKvStore, Person, Undo } from "@fedify/fedify";
 import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
-import { openKv } from "@deno/kv";
-
-export const kv = await openKv("kv.db");
+import { PostgresKvStore } from "@fedify/postgres";
+import postgres from "postgres";
+import { supabase } from "~/utils/supabase";
+import { DatabaseTableNames } from "~/models/database-tables";
+import '@dotenvx/dotenvx/config'
 
 const logger = getLogger(["LinkGator"]);
 
 const federation = createFederation<void>({
-    kv: new MemoryKvStore()
+    kv: new PostgresKvStore(postgres(process.env.SUPABASE_CONNECTION_STRING ?? ""))
 });
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
@@ -29,26 +33,16 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
 })
     .setKeyPairsDispatcher(async (ctx, identifier) => {
         if (identifier != "me") return [];  // Other than "me" is not found.
-        const entry = await kv.get<{
-            privateKey: JsonWebKey;
-            publicKey: JsonWebKey;
-        }>(["key"]);
-        if (entry == null || entry.value == null) {
+        const entry = await supabase.from(DatabaseTableNames.Keys).select().order("created_at", {ascending: false}).limit(1);
+        if (entry === null || entry.data === null || entry.data.length === 0) {
             // Generate a new key pair at the first time:
             const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
             // Store the generated key pair to the Deno KV database in JWK format:
-            await kv.set(
-                ["key"],
-                {
-                    privateKey: await exportJwk(privateKey),
-                    publicKey: await exportJwk(publicKey),
-                }
-            );
+            await supabase.from(DatabaseTableNames.Keys).insert({public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey))})
             return [{ privateKey, publicKey }];
         }
-        // Load the key pair from the Deno KV database:
-        const privateKey = await importJwk(entry.value.privateKey, "private");
-        const publicKey = await importJwk(entry.value.publicKey, "public");
+        const privateKey = await importJwk(JSON.parse(entry.data[0].private_key), "private");
+        const publicKey = await importJwk(JSON.parse(entry.data[0].public_key), "public");
         return [{ privateKey, publicKey }];
     });
 
@@ -70,18 +64,15 @@ federation
         );
 
         logger.debug `Follow request: ${follow}`;
-        await kv.set(["followers", follow.actorId.href], follower.preferredUsername);
+        const currentUser = await supabase.auth.getUser();
+        await supabase.from(DatabaseTableNames.Followers).insert({follower_id: follow.actorId.href, user_id: currentUser.data.user?.id ?? ""});
     })
     .on(Undo, async (ctx, undo) => {
         if (undo.id == null || undo.actorId == null || undo.objectId == null) {
             return;
         }
         logger.debug `Undo request: ${undo} for ${undo.actorId.href}`;
-        const doot = kv.list({prefix:["followers"]});
-        for await (const item of doot) {
-            logger.debug `${item}`
-        }
-        await kv.delete(["followers", undo.actorId.href]);
+        await supabase.from(DatabaseTableNames.Followers).delete().eq("follower_id", undo.actorId.href);
     });
 
 

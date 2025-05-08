@@ -1,15 +1,17 @@
 import { A, createAsync, query } from "@solidjs/router";
 import { For } from "solid-js";
 import Counter from "~/components/Counter";
-import { kv } from "~/middleware";
+import { DatabaseTableNames } from "~/models/database-tables";
+import { supabase } from "~/utils/supabase";
 
 const getFollowers = query(async () => {
   "use server"
 
   const followers: string[] = [];
-  for await (const item of kv.list<string>({prefix: ["followers"]})) {
-    if (followers.includes(item.value)) continue;
-    followers.push(item.value);
+  const data = (await supabase.from(DatabaseTableNames.Followers).select()).data;
+  for (const item of data || []) {
+    if (followers.includes(item.follower_id)) continue;
+    followers.push(item.follower_id);
   }
   return followers;
 }, "getFollowers");
