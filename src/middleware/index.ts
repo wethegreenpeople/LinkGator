@@ -1,8 +1,10 @@
 import { createMiddleware } from "@solidjs/start/middleware";
 import { type FetchEvent } from "@solidjs/start/server";
-import { createFederation, Federation, MemoryKvStore, Person } from "@fedify/fedify";
+import { createFederation, Federation, Follow, MemoryKvStore, Person } from "@fedify/fedify";
 import { behindProxy } from "x-forwarded-fetch";
+import { getLogger } from "@logtape/logtape";
 
+const logger = getLogger(["LinkGator"]);
 
 const federation = createFederation<void>({
     kv: new MemoryKvStore()
@@ -17,9 +19,22 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
         name: "Me",
         summary: "This is me",
         preferredUsername: identifier,
-        url: new URL("/", ctx.url)
+        url: new URL("/", ctx.url),
+        inbox: ctx.getInboxUri(identifier)
     });
 });
+
+federation
+  .setInboxListeners("/users/{identifier}/inbox", "/inbox")
+  .on(Follow, async (ctx, follow) => {
+    if (follow.id == null || follow.actorId == null || follow.objectId == null) {
+      return;
+    }
+    const parsed = ctx.parseUri(follow.objectId);
+    if (parsed?.type !== "actor" || parsed.identifier !== "me") return;
+    const follower = await follow.getActor(ctx);
+    logger.debug(JSON.stringify(follower));
+  });
 
 // Create a proxy-aware handler
 const handleFederation = behindProxy(async (request: Request) => {

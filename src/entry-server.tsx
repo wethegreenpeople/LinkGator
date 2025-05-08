@@ -8,6 +8,7 @@ await configure({
   filters: {},
   loggers: [
     { category: "fedify",  sinks: ["console"], lowestLevel: "info" },
+    { category: "LinkGator",  sinks: ["console"], lowestLevel: "debug" },
   ],
 });
 
