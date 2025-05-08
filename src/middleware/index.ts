@@ -1,6 +1,6 @@
 import { createMiddleware } from "@solidjs/start/middleware";
 import { type FetchEvent } from "@solidjs/start/server";
-import { Accept, createFederation, exportJwk, Federation, Follow, generateCryptoKeyPair, importJwk, MemoryKvStore, Person } from "@fedify/fedify";
+import { Accept, createFederation, exportJwk, Federation, Follow, generateCryptoKeyPair, importJwk, MemoryKvStore, Person, Undo } from "@fedify/fedify";
 import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
 import { openKv } from "@deno/kv";
@@ -61,7 +61,6 @@ federation
         const parsed = ctx.parseUri(follow.objectId);
         if (parsed?.type !== "actor" || parsed.identifier !== "me") return;
         const follower = await follow.getActor(ctx);
-        logger.debug`${follower}`;
 
         if (follower === null) return;
         await ctx.sendActivity(
@@ -70,8 +69,21 @@ federation
             new Accept({ actor: follow.objectId, object: follow }),
         );
 
-        await kv.set(["followers", follow.id.href], follow.actorId.href);
+        logger.debug `Follow request: ${follow}`;
+        await kv.set(["followers", follow.actorId.href], follower.preferredUsername);
+    })
+    .on(Undo, async (ctx, undo) => {
+        if (undo.id == null || undo.actorId == null || undo.objectId == null) {
+            return;
+        }
+        logger.debug `Undo request: ${undo} for ${undo.actorId.href}`;
+        const doot = kv.list({prefix:["followers"]});
+        for await (const item of doot) {
+            logger.debug `${item}`
+        }
+        await kv.delete(["followers", undo.actorId.href]);
     });
+
 
 // Create a proxy-aware handler
 const handleFederation = behindProxy(async (request: Request) => {
