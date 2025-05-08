@@ -1,5 +1,14 @@
 // @refresh reload
+import { configure, getConsoleSink } from "@logtape/logtape";
 import { createHandler, StartServer } from "@solidjs/start/server";
+
+await configure({
+  sinks: { console: getConsoleSink() },
+  filters: {},
+  loggers: [
+    { category: "fedify",  sinks: ["console"], lowestLevel: "info" },
+  ],
+});
 
 export default createHandler(() => (
   <StartServer
