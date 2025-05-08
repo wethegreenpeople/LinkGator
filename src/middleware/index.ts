@@ -33,12 +33,12 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
 })
     .setKeyPairsDispatcher(async (ctx, identifier) => {
         if (identifier != "me") return [];  // Other than "me" is not found.
-        const entry = await supabase.from(DatabaseTableNames.Keys).select().order("created_at", {ascending: false}).limit(1);
+        const entry = await supabase.from(DatabaseTableNames.Keys).select().order("created_at", { ascending: false }).limit(1);
         if (entry === null || entry.data === null || entry.data.length === 0) {
             // Generate a new key pair at the first time:
             const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
             // Store the generated key pair to the Deno KV database in JWK format:
-            await supabase.from(DatabaseTableNames.Keys).insert({public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey))})
+            await supabase.from(DatabaseTableNames.Keys).insert({ public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
             return [{ privateKey, publicKey }];
         }
         const privateKey = await importJwk(JSON.parse(entry.data[0].private_key), "private");
@@ -63,15 +63,15 @@ federation
             new Accept({ actor: follow.objectId, object: follow }),
         );
 
-        logger.debug `Follow request: ${follow}`;
+        logger.debug`Follow request: ${follow}`;
         const currentUser = await supabase.auth.getUser();
-        await supabase.from(DatabaseTableNames.Followers).insert({follower_id: follow.actorId.href, user_id: currentUser.data.user?.id ?? ""});
+        await supabase.from(DatabaseTableNames.Followers).insert({ follower_id: follow.actorId.href, user_id: currentUser.data.user?.id ?? "" });
     })
     .on(Undo, async (ctx, undo) => {
         if (undo.id == null || undo.actorId == null || undo.objectId == null) {
             return;
         }
-        logger.debug `Undo request: ${undo} for ${undo.actorId.href}`;
+        logger.debug`Undo request: ${undo} for ${undo.actorId.href}`;
         await supabase.from(DatabaseTableNames.Followers).delete().eq("follower_id", undo.actorId.href);
     });
 
