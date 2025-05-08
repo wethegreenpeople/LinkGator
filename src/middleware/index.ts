@@ -5,8 +5,9 @@ import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
 import { openKv } from "@deno/kv";
 
+export const kv = await openKv("kv.db");
+
 const logger = getLogger(["LinkGator"]);
-const kv = await openKv("kv.db");
 
 const federation = createFederation<void>({
     kv: new MemoryKvStore()
