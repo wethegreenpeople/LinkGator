@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@deno/kv':
+        specifier: ^0.10.0
+        version: 0.10.0
       '@fedify/fedify':
         specifier: ^1.5.1
         version: 1.5.1(web-streams-polyfill@3.3.3)
@@ -22,13 +25,13 @@ importers:
         version: 0.15.3(solid-js@1.9.6)
       '@solidjs/start':
         specifier: ^1.1.3
-        version: 1.1.3(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(solid-js@1.9.6)(terser@5.39.0)(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))(vite@6.3.5(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
+        version: 1.1.3(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(solid-js@1.9.6)(terser@5.39.0)(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))(vite@6.3.5(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
       solid-js:
         specifier: ^1.9.6
         version: 1.9.6
       vinxi:
         specifier: ^0.5.6
-        version: 0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
+        version: 0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
       x-forwarded-fetch:
         specifier: ^0.2.0
         version: 0.2.0
@@ -143,6 +146,33 @@ packages:
 
   '@dabh/diagnostics@2.0.3':
     resolution: {integrity: sha512-hrlQOIi7hAfzsMqlGSFyVucrx38O+j6wiGOf//H2ecvIEqYN4ADBSS2iLMh5UFyDunCNniUIPk/q3riFv45xRA==}
+
+  '@deno/kv-darwin-arm64@0.10.0':
+    resolution: {integrity: sha512-A3ZlAtDwustZDPG7F2quF0PLn18qagGdRP7BynaRdyMvbQRZFKODg2MBjtRJIoaDnbodbprnyxFNwIKKHTEgXg==}
+    engines: {node: '>= 18'}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@deno/kv-darwin-x64@0.10.0':
+    resolution: {integrity: sha512-olIc2rVGat+CdVc4sAoCnaCht3072+Y87rNA3RVDlHSdCf/lCA/72rKHkhLnr2N0NDaZuObgez0q5dlnG81Hvg==}
+    engines: {node: '>= 18'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@deno/kv-linux-x64-gnu@0.10.0':
+    resolution: {integrity: sha512-WruhVdvLQmy/IbawcRQlqvqd7ieUbZnKU/0Cxy0y4LXwPQ9SBHeUG6U0YI6+4gN+q26GXBnifEQv6e6ocqS9Qg==}
+    engines: {node: '>= 18'}
+    cpu: [x64]
+    os: [linux]
+
+  '@deno/kv-win32-x64-msvc@0.10.0':
+    resolution: {integrity: sha512-7l9rlxS7KERpnRSXGoot+zXBeaDt4Dt+LShTva+XwuYqQstnxTuo0xLNzt36+nYHtMeVGCxZUzwQFCNp8686Sw==}
+    engines: {node: '>= 18'}
+    cpu: [x64]
+    os: [win32]
+
+  '@deno/kv@0.10.0':
+    resolution: {integrity: sha512-fbQFYsWvTbyjj6QhXOXFzb3AaMuStOTgUQvgoHf0bJ2s8csklV4V5NkGvi/aNH3uqmduYw+LULz9pPerpiwNfA==}
 
   '@deno/shim-crypto@0.3.1':
     resolution: {integrity: sha512-ed4pNnfur6UbASEgF34gVxR9p7Mc3qF+Ygbmjiil8ws5IhNFhPDFy5vE5hQAUA9JmVsSxXPcVLM5Rf8LOZqQ5Q==}
@@ -3866,6 +3896,25 @@ snapshots:
       enabled: 2.0.0
       kuler: 2.0.0
 
+  '@deno/kv-darwin-arm64@0.10.0':
+    optional: true
+
+  '@deno/kv-darwin-x64@0.10.0':
+    optional: true
+
+  '@deno/kv-linux-x64-gnu@0.10.0':
+    optional: true
+
+  '@deno/kv-win32-x64-msvc@0.10.0':
+    optional: true
+
+  '@deno/kv@0.10.0':
+    optionalDependencies:
+      '@deno/kv-darwin-arm64': 0.10.0
+      '@deno/kv-darwin-x64': 0.10.0
+      '@deno/kv-linux-x64-gnu': 0.10.0
+      '@deno/kv-win32-x64-msvc': 0.10.0
+
   '@deno/shim-crypto@0.3.1': {}
 
   '@deno/shim-deno-test@0.5.0': {}
@@ -4517,11 +4566,11 @@ snapshots:
     dependencies:
       solid-js: 1.9.6
 
-  '@solidjs/start@1.1.3(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(solid-js@1.9.6)(terser@5.39.0)(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))(vite@6.3.5(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))':
+  '@solidjs/start@1.1.3(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(solid-js@1.9.6)(terser@5.39.0)(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))(vite@6.3.5(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))':
     dependencies:
       '@tanstack/server-functions-plugin': 1.119.2(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
-      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
-      '@vinxi/server-components': 0.5.1(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
+      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
+      '@vinxi/server-components': 0.5.1(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
       defu: 6.1.4
       error-stack-parser: 2.1.4
       html-to-image: 1.11.13
@@ -4532,7 +4581,7 @@ snapshots:
       source-map-js: 1.2.1
       terracotta: 1.0.6(solid-js@1.9.6)
       tinyglobby: 0.2.13
-      vinxi: 0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
+      vinxi: 0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
       vite-plugin-solid: 2.11.6(solid-js@1.9.6)(vite@6.3.5(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
     transitivePeerDependencies:
       - '@testing-library/jest-dom'
@@ -4819,7 +4868,7 @@ snapshots:
       untun: 0.1.3
       uqr: 0.1.2
 
-  '@vinxi/plugin-directives@0.5.1(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))':
+  '@vinxi/plugin-directives@0.5.1(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))':
     dependencies:
       '@babel/parser': 7.27.2
       acorn: 8.14.1
@@ -4830,18 +4879,18 @@ snapshots:
       magicast: 0.2.11
       recast: 0.23.11
       tslib: 2.8.1
-      vinxi: 0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
+      vinxi: 0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
 
-  '@vinxi/server-components@0.5.1(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))':
+  '@vinxi/server-components@0.5.1(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))':
     dependencies:
-      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
+      '@vinxi/plugin-directives': 0.5.1(vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0))
       acorn: 8.14.1
       acorn-loose: 8.5.0
       acorn-typescript: 1.4.13(acorn@8.14.1)
       astring: 1.9.0
       magicast: 0.2.11
       recast: 0.23.11
-      vinxi: 0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
+      vinxi: 0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
 
   '@whatwg-node/disposablestack@0.0.6':
     dependencies:
@@ -6311,7 +6360,7 @@ snapshots:
       p-wait-for: 5.0.2
       qs: 6.14.0
 
-  nitropack@2.11.11:
+  nitropack@2.11.11(@deno/kv@0.10.0):
     dependencies:
       '@cloudflare/kv-asset-handler': 0.4.0
       '@netlify/functions': 3.1.5(rollup@4.40.2)
@@ -6379,7 +6428,7 @@ snapshots:
       unenv: 2.0.0-rc.15
       unimport: 5.0.1
       unplugin-utils: 0.2.4
-      unstorage: 1.16.0(db0@0.3.2)(ioredis@5.6.1)
+      unstorage: 1.16.0(@deno/kv@0.10.0)(db0@0.3.2)(ioredis@5.6.1)
       untyped: 2.0.0
       unwasm: 0.3.9
       youch: 4.1.0-beta.7
@@ -7283,7 +7332,7 @@ snapshots:
       picomatch: 4.0.2
       webpack-virtual-modules: 0.6.2
 
-  unstorage@1.16.0(db0@0.3.2)(ioredis@5.6.1):
+  unstorage@1.16.0(@deno/kv@0.10.0)(db0@0.3.2)(ioredis@5.6.1):
     dependencies:
       anymatch: 3.1.3
       chokidar: 4.0.3
@@ -7294,6 +7343,7 @@ snapshots:
       ofetch: 1.4.1
       ufo: 1.6.1
     optionalDependencies:
+      '@deno/kv': 0.10.0
       db0: 0.3.2
       ioredis: 5.6.1
 
@@ -7361,7 +7411,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vinxi@0.5.6(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0):
+  vinxi@0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0):
     dependencies:
       '@babel/core': 7.27.1
       '@babel/plugin-syntax-jsx': 7.27.1(@babel/core@7.27.1)
@@ -7383,7 +7433,7 @@ snapshots:
       hookable: 5.5.3
       http-proxy: 1.18.1
       micromatch: 4.0.8
-      nitropack: 2.11.11
+      nitropack: 2.11.11(@deno/kv@0.10.0)
       node-fetch-native: 1.6.6
       path-to-regexp: 6.3.0
       pathe: 1.1.2
@@ -7394,7 +7444,7 @@ snapshots:
       ufo: 1.6.1
       unctx: 2.4.1
       unenv: 1.10.0
-      unstorage: 1.16.0(db0@0.3.2)(ioredis@5.6.1)
+      unstorage: 1.16.0(@deno/kv@0.10.0)(db0@0.3.2)(ioredis@5.6.1)
       vite: 6.3.5(@types/node@22.15.17)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
       zod: 3.24.4
     transitivePeerDependencies:

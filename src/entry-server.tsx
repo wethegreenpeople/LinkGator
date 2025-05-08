@@ -1,10 +1,10 @@
 // @refresh reload
-import { configure, getConsoleSink } from "@logtape/logtape";
+import { ansiColorFormatter, configure, getConsoleSink } from "@logtape/logtape";
 import { createHandler, StartServer } from "@solidjs/start/server";
 
 await configure({
   reset: true,
-  sinks: { console: getConsoleSink() },
+  sinks: { console: getConsoleSink({formatter: ansiColorFormatter}) },
   filters: {},
   loggers: [
     { category: "fedify",  sinks: ["console"], lowestLevel: "info" },
