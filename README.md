@@ -1,32 +1,109 @@
-# SolidStart
+# LinkGator
 
-Everything you need to build a Solid project, powered by [`solid-start`](https://start.solidjs.com);
+LinkGator is a SolidJS project built with SolidStart, providing a modern web application with Supabase integration.
 
-## Creating a project
+## Features
+
+- SolidJS for reactive UI components
+- Supabase backend integration for authentication and database
+- TailwindCSS for styling
+- Federated authentication
+
+## Prerequisites
+
+- Node.js v22 or higher
+- pnpm package manager
+- Supabase account and project setup
+
+## Getting Started
+
+### Installation
+
+1. Clone the repository
 
 ```bash
-# create a new project in the current directory
-npm init solid@latest
-
-# create a new project in my-app
-npm init solid@latest my-app
+git clone <your-repo-url>
+cd LinkGator
 ```
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+2. Install dependencies using pnpm
 
 ```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+pnpm install
 ```
 
-## Building
+### Environment Configuration
 
-Solid apps are built with _presets_, which optimise your project for deployment to different environments.
+1. Copy the example environment file to create your local environment configuration:
 
-By default, `npm run build` will generate a Node app that you can run with `npm start`. To use a different preset, add it to the `devDependencies` in `package.json` and specify in your `app.config.js`.
+```bash
+cp .env.example .env
+```
 
-## This project was created with the [Solid CLI](https://solid-cli.netlify.app)
+2. Edit the `.env` file and add your Supabase credentials and other configuration:
+
+```
+# Supabase Configuration
+SUPABASE_URL=https://your-project-url.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+SUPABASE_CONNECTION_STRING=postgresql://postgres:password@localhost:5432/database
+
+# Application Domain
+DOMAIN=localhost:3000
+```
+
+**Important**: Never commit your `.env` file to version control. The `.env.example` file is provided as a template.
+
+### Running the Development Server
+
+Start the development server:
+
+```bash
+pnpm dev
+```
+
+Or start the server and open the app in a new browser tab:
+
+```bash
+pnpm dev -- --open
+```
+
+### Building for Production
+
+Build the application for production:
+
+```bash
+pnpm build
+```
+
+This will generate a production-ready build optimized for deployment.
+
+### Running the Production Build
+
+Start the production server after building:
+
+```bash
+pnpm start
+```
+
+## Project Structure
+
+- `src/` - Source code directory
+  - `components/` - Reusable UI components
+  - `middleware/` - API middleware functions
+  - `models/` - Data models and schemas
+  - `routes/` - Application routes and pages
+  - `utils/` - Utility functions including Supabase configuration
+
+## Technologies Used
+
+- [SolidJS](https://www.solidjs.com/)
+- [SolidStart](https://start.solidjs.com/)
+- [Supabase](https://supabase.com/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Vinxi](https://github.com/solidjs-community/vinxi)
+
+## License
+
+[MIT](LICENSE)
