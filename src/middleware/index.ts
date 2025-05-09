@@ -35,10 +35,9 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
         if (identifier != "me") return [];  // Other than "me" is not found.
         const entry = await supabase.from(DatabaseTableNames.Keys).select().order("created_at", { ascending: false }).limit(1);
         if (entry === null || entry.data === null || entry.data.length === 0) {
-            // Generate a new key pair at the first time:
             const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
-            // Store the generated key pair to the Deno KV database in JWK format:
-            await supabase.from(DatabaseTableNames.Keys).insert({ public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
+            const currentUser = await supabase.auth.getUser();
+            await supabase.from(DatabaseTableNames.Keys).insert({user_id: currentUser.data.user?.id ?? "", public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
             return [{ privateKey, publicKey }];
         }
         const privateKey = await importJwk(JSON.parse(entry.data[0].private_key), "private");
@@ -104,6 +103,15 @@ const handleFederation = behindProxy(async (request: Request) => {
 });
 
 async function fedifyMiddleware(event: FetchEvent) {
+    const url = new URL(event.request.url);
+    
+    // Skip processing for SolidStart server actions and login routes
+    if (url.pathname.startsWith('/_server') || 
+        url.pathname === '/login' || 
+        url.pathname.startsWith('/api/')) {
+        return undefined;
+    }
+
     // Use the proxy-aware handler with the event request
     const response = await handleFederation(event.request);
 

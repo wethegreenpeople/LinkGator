@@ -68,15 +68,7 @@ export type Database = {
           follower_id?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "followers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       keys: {
         Row: {
@@ -84,41 +76,44 @@ export type Database = {
           id: string
           private_key: string
           public_key: string
+          user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
           private_key: string
           public_key: string
+          user_id: string
         }
         Update: {
           created_at?: string
           id?: string
           private_key?: string
           public_key?: string
+          user_id?: string
         }
         Relationships: []
       }
-      users: {
+      profiles: {
         Row: {
+          auth_id: string
           created_at: string
-          data: Json | null
-          id: string
-          updated_at: string
+          home_domain: string
+          id: number
           user_name: string
         }
         Insert: {
+          auth_id: string
           created_at?: string
-          data?: Json | null
-          id?: string
-          updated_at?: string
+          home_domain: string
+          id?: number
           user_name: string
         }
         Update: {
+          auth_id?: string
           created_at?: string
-          data?: Json | null
-          id?: string
-          updated_at?: string
+          home_domain?: string
+          id?: number
           user_name?: string
         }
         Relationships: []
