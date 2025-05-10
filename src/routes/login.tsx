@@ -1,20 +1,13 @@
 import { action, redirect, useLocation } from "@solidjs/router";
 import { createSignal, Show } from "solid-js";
 import { DatabaseTableNames } from "~/models/database-tables";
-import { supabase } from "~/utils/supabase";
+import { serviceSupabase, supabase } from "~/utils/supabase";
 import '@dotenvx/dotenvx/config'
 import { getLogger } from "@logtape/logtape";
 import { createClient } from "@supabase/supabase-js";
+import { exportJwk, generateCryptoKeyPair } from "@fedify/fedify";
 
 const logger = getLogger(["LinkGator"]);
-
-// Create a Supabase client with service role key to bypass RLS during signup
-const createServiceRoleClient = () => {
-    "use server"
-    const supabaseUrl = process.env.SUPABASE_URL ?? "";
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-    return createClient(supabaseUrl, supabaseServiceKey);
-};
 
 const signUp = action(async (formData: FormData) => {
     "use server"
@@ -29,17 +22,25 @@ const signUp = action(async (formData: FormData) => {
     }
 
     // Use service role client for profile creation to bypass RLS
-    const serviceClient = createServiceRoleClient();
-    const updateProfileResponse = await serviceClient.from(DatabaseTableNames.Profiles).insert({ 
+    const updateProfileResponse = await serviceSupabase.from(DatabaseTableNames.Profiles).insert({ 
         auth_id: signUpResponse.data.user?.id ?? "", 
-        user_name: formData.get("username")?.toString() ?? "", 
-        home_domain: process.env.DOMAIN ?? "" 
+        actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`
     });
     
     if (updateProfileResponse.error) {
         logger.info`Couldn't update profile: ${updateProfileResponse}`;
         return new Response("Server Error", { status: 500 });
     }
+
+    const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
+    const keyResponse = await serviceSupabase.from(DatabaseTableNames.Keys).insert({auth_id: signUpResponse.data.user?.id ?? "", actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`, public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
+
+    if (keyResponse.error) {
+        logger.info`Couldn't create keys: ${keyResponse}`;
+        return new Response("Server Error", { status: 500 });
+    }
+
+    await supabase.auth.signInWithPassword({email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
 
     return redirect("./");
 });
