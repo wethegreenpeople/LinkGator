@@ -1,4 +1,4 @@
-import { action, redirect, useLocation } from "@solidjs/router";
+import { action, createAsync, query, redirect, useLocation } from "@solidjs/router";
 import { createSignal, Show } from "solid-js";
 import { DatabaseTableNames } from "~/models/database-tables";
 import { serviceSupabase, supabase } from "~/utils/supabase";
@@ -22,30 +22,41 @@ const signUp = action(async (formData: FormData) => {
     }
 
     // Use service role client for profile creation to bypass RLS
-    const updateProfileResponse = await serviceSupabase.from(DatabaseTableNames.Profiles).insert({ 
-        auth_id: signUpResponse.data.user?.id ?? "", 
+    const updateProfileResponse = await serviceSupabase.from(DatabaseTableNames.Profiles).insert({
+        auth_id: signUpResponse.data.user?.id ?? "",
         actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`
     });
-    
+
     if (updateProfileResponse.error) {
         logger.info`Couldn't update profile: ${updateProfileResponse}`;
         return new Response("Server Error", { status: 500 });
     }
 
     const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
-    const keyResponse = await serviceSupabase.from(DatabaseTableNames.Keys).insert({auth_id: signUpResponse.data.user?.id ?? "", actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`, public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
+    const keyResponse = await serviceSupabase.from(DatabaseTableNames.Keys).insert({ auth_id: signUpResponse.data.user?.id ?? "", actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`, public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
 
     if (keyResponse.error) {
         logger.info`Couldn't create keys: ${keyResponse}`;
         return new Response("Server Error", { status: 500 });
     }
 
-    await supabase.auth.signInWithPassword({email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
+    await supabase.auth.signInWithPassword({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
 
     return redirect("./");
 });
 
+const isLoggedIn = query(async () => {
+    "use server"
+    const loggedIn = !!(await supabase.auth.getSession()).data.session
+    if (loggedIn) return redirect("./");
+}, "isLoggedIn");
+
+export const route = {
+    preload: () => isLoggedIn()
+}
+
 export default function Login() {
+    const loggedIn = createAsync(() => isLoggedIn());
     const [isLogin, setIsLogin] = createSignal(true);
     return (
         <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
