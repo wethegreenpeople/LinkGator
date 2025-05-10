@@ -1,11 +1,11 @@
-import { action, createAsync, query, redirect, useLocation } from "@solidjs/router";
-import { createSignal, Show, createEffect } from "solid-js";
+import { action, createAsync, query, redirect, useAction, useLocation, useNavigate } from "@solidjs/router";
+import { createSignal, Show, createEffect, createResource, onMount } from "solid-js";
 import { DatabaseTableNames } from "~/models/database-tables";
-import { serviceSupabase, supabase } from "~/utils/supabase";
-import '@dotenvx/dotenvx/config'
 import { getLogger } from "@logtape/logtape";
-import { createClient } from "@supabase/supabase-js";
 import { exportJwk, generateCryptoKeyPair } from "@fedify/fedify";
+import { createServerSupabase, supabaseService } from "~/utils/supabase-server";
+import { supabaseClient } from "~/utils/supabase-client";
+import { AuthError, Session } from "@supabase/supabase-js";
 
 const logger = getLogger(["LinkGator"]);
 
@@ -15,14 +15,14 @@ const signUp = action(async (formData: FormData) => {
     logger.debug`${formData.get("username")} signup`
 
     // Use regular client for auth signup
-    const signUpResponse = await supabase.auth.signUp({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
+    const signUpResponse = await supabaseService.auth.signUp({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
     if (signUpResponse.error) {
         logger.error`Signup error: ${signUpResponse.error.message}`;
         return new Response("Server Error", { status: 500 });
     }
 
     // Use service role client for profile creation to bypass RLS
-    const updateProfileResponse = await serviceSupabase.from(DatabaseTableNames.Profiles).insert({
+    const updateProfileResponse = await supabaseService.from(DatabaseTableNames.Profiles).insert({
         auth_id: signUpResponse.data.user?.id ?? "",
         actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`
     });
@@ -33,14 +33,15 @@ const signUp = action(async (formData: FormData) => {
     }
 
     const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
-    const keyResponse = await serviceSupabase.from(DatabaseTableNames.Keys).insert({ auth_id: signUpResponse.data.user?.id ?? "", actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`, public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
+    const keyResponse = await supabaseService.from(DatabaseTableNames.Keys).insert({ auth_id: signUpResponse.data.user?.id ?? "", actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`, public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
 
     if (keyResponse.error) {
         logger.info`Couldn't create keys: ${keyResponse}`;
         return new Response("Server Error", { status: 500 });
     }
 
-    await supabase.auth.signInWithPassword({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
+    const serverSupabase = createServerSupabase();
+    await serverSupabase.auth.signInWithPassword({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
 
     return redirect("./");
 });
@@ -67,11 +68,12 @@ const logIn = action(async (formData: FormData) => {
         actorUri = `https://${domain}/users/${username}`;
     } else {
         // It's a regular username
-        actorUri = `https://${process.env.DOMAIN}/users/${username}`;
+        actorUri = `https://${process.env.VITE_DOMAIN}/users/${username}`;
     }
     
+    
     // Query the Profiles table to find the auth_id associated with that actor_uri
-    const profileResponse = await serviceSupabase
+    const profileResponse = await supabaseService
         .from(DatabaseTableNames.Profiles)
         .select()
         .eq('actor_uri', actorUri)
@@ -85,7 +87,7 @@ const logIn = action(async (formData: FormData) => {
     const auth_id = profileResponse.data[0].auth_id;
     
     // Get user details from the auth system
-    const userResponse = await serviceSupabase.auth.admin.getUserById(auth_id);
+    const userResponse = await supabaseService.auth.admin.getUserById(auth_id);
     
     if (userResponse.error || !userResponse.data.user?.email) {
         logger.error`Login error: Could not retrieve user details for auth_id ${auth_id}`;
@@ -94,22 +96,39 @@ const logIn = action(async (formData: FormData) => {
     
     const email = userResponse.data.user.email;
     
-    // Sign in with the email and password
-    const logInResponse = await supabase.auth.signInWithPassword({ 
+    // Sign in
+    const supabase = createServerSupabase();
+    const { data, error } = await supabase.auth.signInWithPassword({ 
         email: email, 
         password: password 
-    });
+    })
     
-    if (logInResponse.error) {
-        logger.error`Login error: ${logInResponse.error.message}`;
-        return new Response("Login failed", { status: 401 });
+    if (error) {
+        logger.error`Login error: ${error.message}`
+        return { error: "Login failed" }
+    }
+    
+    // The cookies are already set by the createClient's cookie handler
+    // So we can just redirect
+    throw redirect("./");
+});
+
+const checkIfLoggedIn = query(async () => {
+    "use server"
+    const supabase = createServerSupabase();
+    const session = await supabase.auth.getSession();
+
+    if (session.data.session) {
+        throw redirect("./");
     }
 
-    return redirect("./");
-});
+    return null;
+  }, "checkIfLoggedIn");
+  
 
 export default function Login() {
     const [isLogin, setIsLogin] = createSignal(true);
+    createAsync(() => checkIfLoggedIn());
     
     return (
         <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

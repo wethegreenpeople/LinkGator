@@ -1,7 +1,12 @@
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "~/models/supabase";
+// ~/utils/supabase-client.ts
+import { createBrowserClient } from '@supabase/ssr'
+import type { Database } from "~/models/supabase"
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? "";
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? ""
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY ?? ""
 
-export const supabaseClient = createClient<Database>(supabaseUrl, supabaseKey);
+// Using the browser client for client-side code
+export const supabaseClient = createBrowserClient<Database>(
+  supabaseUrl,
+  supabaseKey
+)

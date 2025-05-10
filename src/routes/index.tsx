@@ -2,13 +2,13 @@ import { A, createAsync, query } from "@solidjs/router";
 import { For } from "solid-js";
 import Counter from "~/components/Counter";
 import { DatabaseTableNames } from "~/models/database-tables";
-import { supabaseServer } from "~/utils/supabase-server";
+import { supabaseService } from "~/utils/supabase-server";
 
 const getFollowers = query(async () => {
   "use server"
 
   const followers: string[] = [];
-  const data = (await supabaseServer.from(DatabaseTableNames.Followers).select()).data;
+  const data = (await supabaseService.from(DatabaseTableNames.Followers).select()).data;
   for (const item of data || []) {
     if (followers.includes(item.follower_actor_uri)) continue;
     followers.push(item.follower_actor_uri);

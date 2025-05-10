@@ -7,7 +7,7 @@ import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
 import { PostgresKvStore } from "@fedify/postgres";
 import postgres from "postgres";
-import { supabaseServer } from "~/utils/supabase-server";
+import { createServerSupabaseClient, supabaseService } from "~/utils/supabase-server";
 import { DatabaseTableNames } from "~/models/database-tables";
 import '@dotenvx/dotenvx/config'
 
@@ -18,7 +18,7 @@ const federation = createFederation<void>({
 });
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
-    const response = await supabaseServer.from(DatabaseTableNames.Profiles)
+    const response = await supabaseService.from(DatabaseTableNames.Profiles)
         .select()
         .eq('actor_uri', ctx.getActorUri(identifier).toString())
         .limit(1);
@@ -40,7 +40,7 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
 })
     .setKeyPairsDispatcher(async (ctx, identifier) => {
         // Filter keys by the current user's ID
-        const entry = await supabaseServer.from(DatabaseTableNames.Keys)
+        const entry = await supabaseService.from(DatabaseTableNames.Keys)
             .select()
             .eq('actor_uri', `${ctx.getActorUri(identifier)}`)
             .order("created_at", { ascending: false })
@@ -90,14 +90,14 @@ federation
         );
 
         logger.debug`Follow request: ${follow}`;
-        await supabaseServer.from(DatabaseTableNames.Followers).insert({ follower_actor_uri: follow.actorId.href.toString(), actor_uri: ctx.getActorUri(parsed.identifier).toString() });
+        await supabaseService.from(DatabaseTableNames.Followers).insert({ follower_actor_uri: follow.actorId.href.toString(), actor_uri: ctx.getActorUri(parsed.identifier).toString() });
     })
     .on(Undo, async (ctx, undo) => {
         if (undo.id == null || undo.actorId == null || undo.objectId == null) {
             return;
         }
         logger.debug`Undo request: ${undo} for ${undo.actorId.href}`;
-        await supabaseServer.from(DatabaseTableNames.Followers).delete().eq("follower_actor_uri", undo.actorId.href);
+        await supabaseService.from(DatabaseTableNames.Followers).delete().eq("follower_actor_uri", undo.actorId.href);
     });
 
 
@@ -150,6 +150,32 @@ async function fedifyMiddleware(event: FetchEvent) {
     return response;
 }
 
+async function authMiddleware(event: FetchEvent) {
+    const url = new URL(event.request.url)
+    
+    if (
+        url.pathname.includes('.')
+    ) {
+        return undefined
+    }
+    
+    try {
+        // Create a supabase client for this request that can handle cookies
+        const supabase = createServerSupabaseClient(event)
+        
+        // Get the user session to refresh tokens if needed
+        // This is the key step that refreshes tokens automatically
+        await supabase.auth.getUser()
+        
+        // Continue the request/response cycle
+        return undefined
+    } catch (error) {
+        console.error("Auth middleware error:", error)
+        return undefined
+    }
+}
+
+
 export default createMiddleware({
-    onRequest: [fedifyMiddleware]
+    onRequest: [authMiddleware, fedifyMiddleware]
 });
