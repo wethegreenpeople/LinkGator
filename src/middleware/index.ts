@@ -7,7 +7,7 @@ import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
 import { PostgresKvStore } from "@fedify/postgres";
 import postgres from "postgres";
-import { supabase } from "~/utils/supabase";
+import { serviceSupabase, supabase } from "~/utils/supabase";
 import { DatabaseTableNames } from "~/models/database-tables";
 import '@dotenvx/dotenvx/config'
 
@@ -18,12 +18,19 @@ const federation = createFederation<void>({
 });
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
-    if (identifier !== "me") {
+    const response = await serviceSupabase.from(DatabaseTableNames.Profiles)
+        .select()
+        .eq('actor_uri', ctx.getActorUri(identifier).toString())
+        .limit(1);
+
+    const user = response.data && response.data.length > 0 ? response.data[0] : null;
+    if (user === null) {
         return null;
     }
+    
     return new Person({
         id: ctx.getActorUri(identifier),
-        name: "Me",
+        name: identifier,
         summary: "This is me",
         preferredUsername: identifier,
         url: new URL("/", ctx.url),
@@ -32,17 +39,37 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
     });
 })
     .setKeyPairsDispatcher(async (ctx, identifier) => {
-        if (identifier != "me") return [];  // Other than "me" is not found.
-        const entry = await supabase.from(DatabaseTableNames.Keys).select().order("created_at", { ascending: false }).limit(1);
-        if (entry === null || entry.data === null || entry.data.length === 0) {
-            const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
-            const currentUser = await supabase.auth.getUser();
-            await supabase.from(DatabaseTableNames.Keys).insert({user_id: currentUser.data.user?.id ?? "", public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
-            return [{ privateKey, publicKey }];
+        // Filter keys by the current user's ID
+        const entry = await serviceSupabase.from(DatabaseTableNames.Keys)
+            .select()
+            .eq('actor_uri', `${ctx.getActorUri(identifier)}`)
+            .order("created_at", { ascending: false })
+            .limit(1);
+        
+        const entryData = entry.data ? entry.data[0] : null;
+        
+        // Check if we have valid data before parsing
+        if (!entryData || !entryData.private_key || !entryData.public_key) {
+            logger.warn`No valid key data found for user ${ctx.getActorUri(identifier).toString()}`;
+            return [];
         }
-        const privateKey = await importJwk(JSON.parse(entry.data[0].private_key), "private");
-        const publicKey = await importJwk(JSON.parse(entry.data[0].public_key), "public");
-        return [{ privateKey, publicKey }];
+        
+        try {
+            const privateKeyData = entryData.private_key ? JSON.parse(entryData.private_key) : null;
+            const publicKeyData = entryData.public_key ? JSON.parse(entryData.public_key) : null;
+            
+            if (!privateKeyData || !publicKeyData) {
+                logger.warn`Invalid key data format for user ${ctx.getActorUri(identifier).toString()}`;
+                return [];
+            }
+            
+            const privateKey = await importJwk(privateKeyData, "private");
+            const publicKey = await importJwk(publicKeyData, "public");
+            return [{ privateKey, publicKey }];
+        } catch (error) {
+            logger.error`Error parsing key data: ${error}`;
+            return [];
+        }
     });
 
 federation
@@ -52,7 +79,7 @@ federation
             return;
         }
         const parsed = ctx.parseUri(follow.objectId);
-        if (parsed?.type !== "actor" || parsed.identifier !== "me") return;
+        if (parsed?.type !== "actor") return;
         const follower = await follow.getActor(ctx);
 
         if (follower === null) return;
@@ -63,15 +90,14 @@ federation
         );
 
         logger.debug`Follow request: ${follow}`;
-        const currentUser = await supabase.auth.getUser();
-        await supabase.from(DatabaseTableNames.Followers).insert({ follower_id: follow.actorId.href, user_id: currentUser.data.user?.id ?? "" });
+        await serviceSupabase.from(DatabaseTableNames.Followers).insert({ follower_actor_uri: follow.actorId.href.toString(), actor_uri: ctx.getActorUri(parsed.identifier).toString() });
     })
     .on(Undo, async (ctx, undo) => {
         if (undo.id == null || undo.actorId == null || undo.objectId == null) {
             return;
         }
         logger.debug`Undo request: ${undo} for ${undo.actorId.href}`;
-        await supabase.from(DatabaseTableNames.Followers).delete().eq("follower_id", undo.actorId.href);
+        await serviceSupabase.from(DatabaseTableNames.Followers).delete().eq("follower_actor_uri", undo.actorId.href);
     });
 
 
