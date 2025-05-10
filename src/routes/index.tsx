@@ -10,8 +10,8 @@ const getFollowers = query(async () => {
   const followers: string[] = [];
   const data = (await supabase.from(DatabaseTableNames.Followers).select()).data;
   for (const item of data || []) {
-    if (followers.includes(item.follower_id)) continue;
-    followers.push(item.follower_id);
+    if (followers.includes(item.follower_actor_uri)) continue;
+    followers.push(item.follower_actor_uri);
   }
   return followers;
 }, "getFollowers");
