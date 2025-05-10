@@ -1,7 +1,8 @@
+"use server"
 import { redirect } from "@solidjs/router";
-import { supabase } from "~/utils/supabase";
+import { supabaseServer } from "~/utils/supabase-server";
 
 export async function GET() {
-    supabase.auth.signOut();
+    supabaseServer.auth.signOut();
     return redirect("./")
 }

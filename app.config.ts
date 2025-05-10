@@ -6,7 +6,15 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: ["61cd35249952f904a71a31e760a2c693.serveo.net"]
-    }
+      allowedHosts: ["b0d5b0c0f2bbd0d8feca222c4e33245b.serveo.net"],
+      esbuild: {
+        options: {
+          supported: {
+            'top-level-await': true,
+          },
+          target: 'esnext'
+        },
+      },
+    },
   }
 });

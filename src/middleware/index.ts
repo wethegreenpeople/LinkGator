@@ -7,7 +7,7 @@ import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
 import { PostgresKvStore } from "@fedify/postgres";
 import postgres from "postgres";
-import { serviceSupabase, supabase } from "~/utils/supabase";
+import { supabaseServer } from "~/utils/supabase-server";
 import { DatabaseTableNames } from "~/models/database-tables";
 import '@dotenvx/dotenvx/config'
 
@@ -18,7 +18,7 @@ const federation = createFederation<void>({
 });
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
-    const response = await serviceSupabase.from(DatabaseTableNames.Profiles)
+    const response = await supabaseServer.from(DatabaseTableNames.Profiles)
         .select()
         .eq('actor_uri', ctx.getActorUri(identifier).toString())
         .limit(1);
@@ -27,7 +27,7 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
     if (user === null) {
         return null;
     }
-    
+
     return new Person({
         id: ctx.getActorUri(identifier),
         name: identifier,
@@ -40,7 +40,7 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
 })
     .setKeyPairsDispatcher(async (ctx, identifier) => {
         // Filter keys by the current user's ID
-        const entry = await serviceSupabase.from(DatabaseTableNames.Keys)
+        const entry = await supabaseServer.from(DatabaseTableNames.Keys)
             .select()
             .eq('actor_uri', `${ctx.getActorUri(identifier)}`)
             .order("created_at", { ascending: false })
@@ -90,14 +90,14 @@ federation
         );
 
         logger.debug`Follow request: ${follow}`;
-        await serviceSupabase.from(DatabaseTableNames.Followers).insert({ follower_actor_uri: follow.actorId.href.toString(), actor_uri: ctx.getActorUri(parsed.identifier).toString() });
+        await supabaseServer.from(DatabaseTableNames.Followers).insert({ follower_actor_uri: follow.actorId.href.toString(), actor_uri: ctx.getActorUri(parsed.identifier).toString() });
     })
     .on(Undo, async (ctx, undo) => {
         if (undo.id == null || undo.actorId == null || undo.objectId == null) {
             return;
         }
         logger.debug`Undo request: ${undo} for ${undo.actorId.href}`;
-        await serviceSupabase.from(DatabaseTableNames.Followers).delete().eq("follower_actor_uri", undo.actorId.href);
+        await supabaseServer.from(DatabaseTableNames.Followers).delete().eq("follower_actor_uri", undo.actorId.href);
     });
 
 
