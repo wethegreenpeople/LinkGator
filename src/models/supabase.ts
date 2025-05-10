@@ -57,64 +57,67 @@ export type Database = {
       }
       followers: {
         Row: {
-          follower_id: string
-          user_id: string
+          actor_uri: string
+          follower_actor_uri: string
+          id: number
         }
         Insert: {
-          follower_id: string
-          user_id: string
+          actor_uri: string
+          follower_actor_uri: string
+          id?: number
         }
         Update: {
-          follower_id?: string
-          user_id?: string
+          actor_uri?: string
+          follower_actor_uri?: string
+          id?: number
         }
         Relationships: []
       }
       keys: {
         Row: {
+          actor_uri: string
+          auth_id: string
           created_at: string
           id: string
           private_key: string
           public_key: string
-          user_id: string
         }
         Insert: {
+          actor_uri: string
+          auth_id: string
           created_at?: string
           id?: string
           private_key: string
           public_key: string
-          user_id: string
         }
         Update: {
+          actor_uri?: string
+          auth_id?: string
           created_at?: string
           id?: string
           private_key?: string
           public_key?: string
-          user_id?: string
         }
         Relationships: []
       }
       profiles: {
         Row: {
+          actor_uri: string
           auth_id: string
           created_at: string
-          home_domain: string
           id: number
-          user_name: string
         }
         Insert: {
+          actor_uri: string
           auth_id: string
           created_at?: string
-          home_domain: string
           id?: number
-          user_name: string
         }
         Update: {
+          actor_uri?: string
           auth_id?: string
           created_at?: string
-          home_domain?: string
           id?: number
-          user_name?: string
         }
         Relationships: []
       }
