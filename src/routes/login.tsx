@@ -73,7 +73,13 @@ const signUp = action(async (formData: FormData) => {
         return new Response("Server Error", { status: 500 });
     }
 
-    return redirect("./");
+    // Create a proper redirect response that will preserve cookies
+    return new Response(null, {
+        status: 302,
+        headers: {
+            Location: "./"
+        }
+    });
 });
 
 const logIn = action(async (formData: FormData) => {
@@ -99,7 +105,7 @@ const logIn = action(async (formData: FormData) => {
         actorUri = `https://${domain}/users/${username}`;
     } else {
         // It's a regular username
-        actorUri = `https://${process.env.DOMAIN}/users/${username}`;
+        actorUri = `https://${process.env.VITE_DOMAIN}/users/${username}`;
     }
     
     // Query the Profiles table to find the auth_id associated with that actor_uri
@@ -135,9 +141,13 @@ const logIn = action(async (formData: FormData) => {
         return { error: "Login failed" };
     }
     
-    // The cookies are already set by the createClient's cookie handler
-    // So we can just redirect
-    throw redirect("./");
+    // Create a proper redirect response that will preserve cookies
+    return new Response(null, {
+        status: 302,
+        headers: {
+            Location: "./"
+        }
+    });
 });
 
 const checkIfLoggedIn = query(async () => {

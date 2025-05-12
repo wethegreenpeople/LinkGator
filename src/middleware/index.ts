@@ -157,7 +157,11 @@ async function authMiddleware(event: FetchEvent) {
     const url = new URL(event.request.url)
     
     if (
-        url.pathname.includes('.')
+        url.pathname.includes('.') ||
+        url.pathname === '/login' ||
+        url.pathname === '/logout' ||
+        url.pathname.startsWith('/_server') ||
+        url.pathname.startsWith('/api/')
     ) {
         return undefined
     }
