@@ -140,14 +140,8 @@ const logIn = action(async (formData: FormData) => {
         logger.error`Login error: ${signInResult.error}`;
         return { error: "Login failed" };
     }
-    
-    // Create a proper redirect response that will preserve cookies
-    return new Response(null, {
-        status: 302,
-        headers: {
-            Location: "./"
-        }
-    });
+
+    return redirect("./");
 });
 
 const checkIfLoggedIn = query(async () => {
