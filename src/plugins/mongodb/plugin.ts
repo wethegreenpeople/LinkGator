@@ -1,6 +1,7 @@
 import { getLogger } from "~/utils/logger";
 import { DatabasePlugin } from "../models/database-plugin";
 import { Result } from "typescript-result";
+import { PluginType } from "../models/plugin";
 
 export class MongoDBDatabasePlugin implements DatabasePlugin {
   logOutUser(): Promise<Result<any, Error>> {
@@ -10,6 +11,7 @@ export class MongoDBDatabasePlugin implements DatabasePlugin {
   name = 'MongoDB Database';
   version = '1.0.0';
   description = 'MongoDB implementation of the database plugin';
+  pluginType: PluginType = PluginType.DATABASE;
   
   logger = getLogger("LinkGator");
   

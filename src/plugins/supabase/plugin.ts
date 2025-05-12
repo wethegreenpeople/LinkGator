@@ -5,9 +5,11 @@ import { Result } from 'typescript-result';
 import { supabaseService } from '~/plugins/supabase/supabase-server';
 import { DatabaseTableNames } from '~/models/database-tables';
 import { PluginManager } from '~/plugins/manager';
-import { Plugin } from '../models/plugin';
-import { getLogger } from '~/utils/logger';
+import { Plugin, PluginType } from '../models/plugin';
+// Update the import to use logtape directly
+import { getLogger } from '@logtape/logtape';
 import { createServerSupabase } from '~/plugins/supabase/supabase-server';
+import { supabaseClient } from './supabase-client';
 
 /**
  * Supabase implementation of the DatabasePlugin interface
@@ -17,8 +19,10 @@ export class SupabaseDatabasePlugin implements DatabasePlugin {
   name = 'Supabase Database';
   version = '1.0.0';
   description = 'Supabase implementation for database access';
+  pluginType = PluginType.DATABASE;
 
-  logger = getLogger("LinkGator");
+  // Update to use array parameter like in login.tsx
+  logger = getLogger(["LinkGator"]);
 
   async getProfileFromActorUri(actorUri: string): Promise<Result<{}, Error>> {
     const response = await supabaseService.from(DatabaseTableNames.Profiles)
@@ -119,11 +123,12 @@ export class SupabaseDatabasePlugin implements DatabasePlugin {
   async signInUser(email: string, password: string): Promise<Result<any, Error>> {
     const serverSupabase = createServerSupabase();
     const signInResponse = await serverSupabase.auth.signInWithPassword({ email, password });
-    
+
     if (signInResponse.error) {
       this.logger.error`Sign in error: ${signInResponse.error.message}`;
       return Result.error(new Error(`Sign in failed: ${signInResponse.error.message}`));
     }
+    this.logger.debug`Sign in successful: ${JSON.stringify(signInResponse.data)}`
     
     return Result.ok(signInResponse.data);
   }

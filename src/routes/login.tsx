@@ -85,6 +85,7 @@ const signUp = action(async (formData: FormData) => {
 const logIn = action(async (formData: FormData) => {
     "use server"
     
+    
     const pluginManager = PluginManager.getInstance();
     const usernameInput = formData.get("username")?.toString() ?? "";
     const password = formData.get("password")?.toString() ?? "";
@@ -131,15 +132,17 @@ const logIn = action(async (formData: FormData) => {
     }
     
     const email = userResponse.data.user.email;
-    
     const signInResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
-        async (plugin) => await plugin.signInUser(email, password)
+        async (plugin) => {
+            return await plugin.signInUser(email, password);
+        }
     );
     
     if (signInResult.isError()) {
         logger.error`Login error: ${signInResult.error}`;
         return { error: "Login failed" };
     }
+    logger.debug `${signInResult}`
 
     return redirect("./");
 });
