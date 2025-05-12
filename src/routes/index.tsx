@@ -1,19 +1,27 @@
 import { A, createAsync, query } from "@solidjs/router";
 import { For } from "solid-js";
+import { Result } from "typescript-result";
 import Counter from "~/components/Counter";
 import { DatabaseTableNames } from "~/models/database-tables";
-import { supabaseService } from "~/utils/supabase-server";
+import { MongoDBDatabasePlugin } from "~/plugins/mongodb/plugin";
+import { PluginManager } from "~/plugins/manager";
+import { DatabasePlugin } from "~/plugins/models/database-plugin";
+import { supabaseService } from "~/plugins/supabase/supabase-server";
 
 const getFollowers = query(async () => {
   "use server"
 
-  const followers: string[] = [];
-  const data = (await supabaseService.from(DatabaseTableNames.Followers).select()).data;
-  for (const item of data || []) {
-    if (followers.includes(item.follower_actor_uri)) continue;
-    followers.push(item.follower_actor_uri);
+  const pluginManager = PluginManager.getInstance();
+  const followersResult = await pluginManager.executeForPlugins<DatabasePlugin, string[]>(
+    async (plugin) => await plugin.getFollowers()
+  );
+  
+  if (followersResult.isError()) {
+    console.error("Error fetching followers:", followersResult.error);
+    return [];
   }
-  return followers;
+  
+  return followersResult.value;
 }, "getFollowers");
 
 export const route = {

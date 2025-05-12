@@ -6,7 +6,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     server: {
-      allowedHosts: ["b0d5b0c0f2bbd0d8feca222c4e33245b.serveo.net"],
+      allowedHosts: ["9d6e0bd526b1d8.lhr.life"],
       esbuild: {
         options: {
           supported: {

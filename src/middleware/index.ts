@@ -7,24 +7,25 @@ import { behindProxy } from "x-forwarded-fetch";
 import { getLogger } from "@logtape/logtape";
 import { PostgresKvStore } from "@fedify/postgres";
 import postgres from "postgres";
-import { createServerSupabaseClient, supabaseService } from "~/utils/supabase-server";
+import { createServerSupabaseClient, supabaseService } from "~/plugins/supabase/supabase-server";
 import { DatabaseTableNames } from "~/models/database-tables";
 import '@dotenvx/dotenvx/config'
+import { PluginManager } from "~/plugins/manager";
+import { DatabasePlugin } from "~/plugins/models/database-plugin";
+import { Result } from "typescript-result";
 
 const logger = getLogger(["LinkGator"]);
+const pluginManager = PluginManager.getInstance();
 
 const federation = createFederation<void>({
     kv: new PostgresKvStore(postgres(process.env.SUPABASE_CONNECTION_STRING ?? ""))
 });
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
-    const response = await supabaseService.from(DatabaseTableNames.Profiles)
-        .select()
-        .eq('actor_uri', ctx.getActorUri(identifier).toString())
-        .limit(1);
-
-    const user = response.data && response.data.length > 0 ? response.data[0] : null;
-    if (user === null) {
+    const profileResult = 
+        await pluginManager.executeForPlugins<DatabasePlugin, Result<{}, Error>>((plugin) => plugin.getProfileFromActorUri(ctx.getActorUri(identifier).toString()));
+    
+    if (profileResult.isError() || profileResult.value === null) {
         return null;
     }
 
@@ -39,24 +40,19 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
     });
 })
     .setKeyPairsDispatcher(async (ctx, identifier) => {
-        // Filter keys by the current user's ID
-        const entry = await supabaseService.from(DatabaseTableNames.Keys)
-            .select()
-            .eq('actor_uri', `${ctx.getActorUri(identifier)}`)
-            .order("created_at", { ascending: false })
-            .limit(1);
-        
-        const entryData = entry.data ? entry.data[0] : null;
-        
-        // Check if we have valid data before parsing
-        if (!entryData || !entryData.private_key || !entryData.public_key) {
+        // With the refactored executeForPlugins, we can now pass the Result directly
+        const keysResult = await pluginManager.executeForPlugins<DatabasePlugin, { private_key: string; public_key: string }>(async (plugin) => 
+            await plugin.getKeysForActor(ctx.getActorUri(identifier).toString())
+        );
+
+        if (keysResult.isError() || !keysResult.value) {
             logger.warn`No valid key data found for user ${ctx.getActorUri(identifier).toString()}`;
             return [];
         }
         
         try {
-            const privateKeyData = entryData.private_key ? JSON.parse(entryData.private_key) : null;
-            const publicKeyData = entryData.public_key ? JSON.parse(entryData.public_key) : null;
+            const privateKeyData = keysResult.value.private_key ? JSON.parse(keysResult.value.private_key) : null;
+            const publicKeyData = keysResult.value.public_key ? JSON.parse(keysResult.value.public_key) : null;
             
             if (!privateKeyData || !publicKeyData) {
                 logger.warn`Invalid key data format for user ${ctx.getActorUri(identifier).toString()}`;
@@ -90,14 +86,21 @@ federation
         );
 
         logger.debug`Follow request: ${follow}`;
-        await supabaseService.from(DatabaseTableNames.Followers).insert({ follower_actor_uri: follow.actorId.href.toString(), actor_uri: ctx.getActorUri(parsed.identifier).toString() });
+        await pluginManager.executeForPlugins<DatabasePlugin, Result<any, Error>>(async (plugin) => 
+            await plugin.addFollower(
+                follow.actorId?.href.toString() ?? "", 
+                ctx.getActorUri(parsed.identifier).toString()
+            )
+        );
     })
     .on(Undo, async (ctx, undo) => {
         if (undo.id == null || undo.actorId == null || undo.objectId == null) {
             return;
         }
         logger.debug`Undo request: ${undo} for ${undo.actorId.href}`;
-        await supabaseService.from(DatabaseTableNames.Followers).delete().eq("follower_actor_uri", undo.actorId.href);
+        await pluginManager.executeForPlugins<DatabasePlugin, Result<any, Error>>(async (plugin) => 
+            await plugin.removeFollower(undo.actorId?.href.toString() ?? "")
+        );
     });
 
 

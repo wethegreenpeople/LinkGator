@@ -44,6 +44,9 @@ importers:
       solid-js:
         specifier: ^1.9.6
         version: 1.9.6
+      typescript-result:
+        specifier: ^3.1.1
+        version: 3.1.1
       vinxi:
         specifier: ^0.5.6
         version: 0.5.6(@deno/kv@0.10.0)(@types/node@22.15.17)(db0@0.3.2)(ioredis@5.6.1)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)
@@ -3460,6 +3463,10 @@ packages:
   type-fest@4.41.0:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
+
+  typescript-result@3.1.1:
+    resolution: {integrity: sha512-KQ7SdBa1UcZCu+qI7pgZ1FdzBIlGiyoHTaQQDshtsKCKiPdzLlkU6OWkJuhjzo+xl+y+dOVO+2HyyEpODNDHyw==}
+    engines: {node: '>=18'}
 
   typescript@5.8.3:
     resolution: {integrity: sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ==}
@@ -7493,6 +7500,8 @@ snapshots:
       typescript: 5.8.3
 
   type-fest@4.41.0: {}
+
+  typescript-result@3.1.1: {}
 
   typescript@5.8.3: {}
 

@@ -1,13 +1,13 @@
 "use server"
 import { redirect } from "@solidjs/router";
-import { createServerSupabase } from "~/utils/supabase-server";
+import { getAuthPlugin } from "~/utils/plugin-factory";
 
 export async function GET() {
-    // Use the server-side client with cookie handling
-    const supabase = createServerSupabase();
+    // Get the auth plugin instead of direct Supabase client
+    const authPlugin = getAuthPlugin();
     
-    // Sign out
-    await supabase.auth.signOut();
+    // Sign out using the plugin interface
+    await authPlugin.signOut();
     
     // Create a response that explicitly clears the auth cookies
     const response = new Response(null, {

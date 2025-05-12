@@ -2,12 +2,16 @@
 import { ansiColorFormatter, configure, getConsoleSink } from "@logtape/logtape";
 import { createHandler, StartServer } from "@solidjs/start/server";
 import { configureLogger } from "./utils/logger";
+import { PluginManager } from "./plugins/manager";
 
+// Initialize logger
 (async () => {
   await configureLogger();
 })().catch(err => {
   console.error("Logger initialization failed:", err);
 });
+
+PluginManager.initializePlugins();
 
 export default createHandler(() => (
   <StartServer

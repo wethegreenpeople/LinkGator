@@ -3,9 +3,11 @@ import { createSignal, Show, createEffect, createResource, onMount } from "solid
 import { DatabaseTableNames } from "~/models/database-tables";
 import { getLogger } from "@logtape/logtape";
 import { exportJwk, generateCryptoKeyPair } from "@fedify/fedify";
-import { createServerSupabase, supabaseService } from "~/utils/supabase-server";
-import { supabaseClient } from "~/utils/supabase-client";
+import { createServerSupabase, supabaseService } from "~/plugins/supabase/supabase-server";
+import { supabaseClient } from "~/plugins/supabase/supabase-client";
 import { AuthError, Session } from "@supabase/supabase-js";
+import { PluginManager } from "~/plugins/manager";
+import { DatabasePlugin } from "~/plugins/models/database-plugin";
 
 const logger = getLogger(["LinkGator"]);
 
@@ -14,34 +16,62 @@ const signUp = action(async (formData: FormData) => {
 
     logger.debug`${formData.get("username")} signup`
 
-    // Use regular client for auth signup
-    const signUpResponse = await supabaseService.auth.signUp({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
-    if (signUpResponse.error) {
-        logger.error`Signup error: ${signUpResponse.error.message}`;
+    const pluginManager = PluginManager.getInstance();
+    const email = formData.get("email")?.toString() ?? "";
+    const password = formData.get("password")?.toString() ?? "";
+    const username = formData.get("username")?.toString() ?? "";
+    const actorUri = `https://${process.env.DOMAIN}/users/${username}`;
+
+    const signUpResult = await pluginManager.executeForPlugins<DatabasePlugin, {user: any}>(
+        async (plugin) => await plugin.signUpUser(email, password)
+    );
+
+    if (signUpResult.isError()) {
+        logger.error`Signup error: ${signUpResult.error}`;
         return new Response("Server Error", { status: 500 });
     }
 
-    // Use service role client for profile creation to bypass RLS
-    const updateProfileResponse = await supabaseService.from(DatabaseTableNames.Profiles).insert({
-        auth_id: signUpResponse.data.user?.id ?? "",
-        actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`
-    });
+    const authId = signUpResult.value?.user?.id;
+    if (!authId) {
+        logger.error`Signup error: No user ID returned`;
+        return new Response("Server Error", { status: 500 });
+    }
 
-    if (updateProfileResponse.error) {
-        logger.info`Couldn't update profile: ${updateProfileResponse}`;
+    const profileResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
+        async (plugin) => await plugin.createUserProfile(authId, actorUri)
+    );
+
+    if (profileResult.isError()) {
+        logger.error`Couldn't update profile: ${profileResult.error}`;
         return new Response("Server Error", { status: 500 });
     }
 
     const { privateKey, publicKey } = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
-    const keyResponse = await supabaseService.from(DatabaseTableNames.Keys).insert({ auth_id: signUpResponse.data.user?.id ?? "", actor_uri: `https://${process.env.DOMAIN}/users/${formData.get("username")?.toString()}`, public_key: JSON.stringify(await exportJwk(publicKey)), private_key: JSON.stringify(await exportJwk(privateKey)) })
+    const exportedPublicKey = JSON.stringify(await exportJwk(publicKey));
+    const exportedPrivateKey = JSON.stringify(await exportJwk(privateKey));
 
-    if (keyResponse.error) {
-        logger.info`Couldn't create keys: ${keyResponse}`;
+    const keysResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
+        async (plugin) => await plugin.createUserKeys(
+            authId, 
+            actorUri, 
+            exportedPublicKey, 
+            exportedPrivateKey
+        )
+    );
+
+    if (keysResult.isError()) {
+        logger.error`Couldn't create keys: ${keysResult.error}`;
         return new Response("Server Error", { status: 500 });
     }
 
-    const serverSupabase = createServerSupabase();
-    await serverSupabase.auth.signInWithPassword({ email: formData.get("email")?.toString() ?? "", password: formData.get("password")?.toString() ?? "" });
+    const signInResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
+        async (plugin) => await plugin.signInUser(email, password)
+    );
+
+    if (signInResult.isError()) {
+        logger.error`Couldn't sign in user: ${signInResult.error}`;
+        return new Response("Server Error", { status: 500 });
+    }
 
     return redirect("./");
 });
@@ -49,6 +79,7 @@ const signUp = action(async (formData: FormData) => {
 const logIn = action(async (formData: FormData) => {
     "use server"
     
+    const pluginManager = PluginManager.getInstance();
     const usernameInput = formData.get("username")?.toString() ?? "";
     const password = formData.get("password")?.toString() ?? "";
     
@@ -68,9 +99,8 @@ const logIn = action(async (formData: FormData) => {
         actorUri = `https://${domain}/users/${username}`;
     } else {
         // It's a regular username
-        actorUri = `https://${process.env.VITE_DOMAIN}/users/${username}`;
+        actorUri = `https://${process.env.DOMAIN}/users/${username}`;
     }
-    
     
     // Query the Profiles table to find the auth_id associated with that actor_uri
     const profileResponse = await supabaseService
@@ -96,16 +126,13 @@ const logIn = action(async (formData: FormData) => {
     
     const email = userResponse.data.user.email;
     
-    // Sign in
-    const supabase = createServerSupabase();
-    const { data, error } = await supabase.auth.signInWithPassword({ 
-        email: email, 
-        password: password 
-    })
+    const signInResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
+        async (plugin) => await plugin.signInUser(email, password)
+    );
     
-    if (error) {
-        logger.error`Login error: ${error.message}`
-        return { error: "Login failed" }
+    if (signInResult.isError()) {
+        logger.error`Login error: ${signInResult.error}`;
+        return { error: "Login failed" };
     }
     
     // The cookies are already set by the createClient's cookie handler
