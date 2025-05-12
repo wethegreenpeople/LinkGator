@@ -127,6 +127,18 @@ export class SupabaseDatabasePlugin implements DatabasePlugin {
     
     return Result.ok(signInResponse.data);
   }
+
+  async logOutUser(): Promise<Result<any, Error>> {
+    const serverSupabase = createServerSupabase();
+    const signInResponse = await serverSupabase.auth.signOut();
+    
+    if (signInResponse.error) {
+      this.logger.error`Sign out error: ${signInResponse.error.message}`;
+      return Result.error(new Error(`Sign out failed: ${signInResponse.error.message}`));
+    }
+    
+    return Result.ok(signInResponse);
+  }
   
   async getFollowers(): Promise<Result<string[], Error>> {
     try {

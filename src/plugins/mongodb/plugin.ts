@@ -3,6 +3,9 @@ import { DatabasePlugin } from "../models/database-plugin";
 import { Result } from "typescript-result";
 
 export class MongoDBDatabasePlugin implements DatabasePlugin {
+  logOutUser(): Promise<Result<any, Error>> {
+    throw new Error("Method not implemented.");
+  }
   id = 'mongodb-database';
   name = 'MongoDB Database';
   version = '1.0.0';
