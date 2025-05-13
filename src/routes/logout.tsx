@@ -5,16 +5,23 @@ import { DatabasePlugin } from "~/plugins/models/database-plugin";
 
 export async function GET() {
     const pluginManager = PluginManager.getInstance();
-    pluginManager.executeForPlugins<DatabasePlugin, any>(async (plugin) => await plugin.logOutUser());
     
-    // Create a response that explicitly clears the auth cookies
-    const response = new Response(null, {
-        status: 303, // Redirect status
-        headers: {
-            "Location": "/login",
-            "Set-Cookie": "sb-access-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax, sb-refresh-token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax"
+    try {
+        // Wait for the plugin logout to complete
+        const result = await pluginManager.executeForPlugins<DatabasePlugin, any>(
+            async (plugin) => await plugin.logOutUser()
+        );
+        
+        // Check for errors from the plugin logout
+        if (result.isError()) {
+            console.error('Error during logout:', result.error);
         }
-    });
-    
-    return response;
+        
+        // Let the redirect happen naturally without manually setting cookies
+        // since the Supabase plugin has already handled the cookie clearing
+        return redirect('/login');
+    } catch (error) {
+        console.error('Unexpected error during logout:', error);
+        return redirect('/login');
+    }
 }

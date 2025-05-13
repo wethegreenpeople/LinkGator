@@ -150,6 +150,11 @@ const checkIfLoggedIn = query(async () => {
     "use server"
     const pluginManager = PluginManager.getInstance();
     
+    // Ensure plugins are initialized
+    if (!PluginManager["initialized"]) {
+        await PluginManager.initializePlugins();
+    }
+    
     try {
         const sessionResult = await pluginManager.executeForPlugins<DatabasePlugin, {session: any} | null>(
             async (plugin) => await plugin.checkIfLoggedIn()

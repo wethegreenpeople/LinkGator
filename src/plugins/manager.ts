@@ -5,12 +5,20 @@ import { Plugin, PluginType } from './models/plugin';
 import { PluginManagerError, PluginManagerErrorType } from './models/plugin-manager';
 import { getLogger } from '../utils/logger';
 import { DatabasePlugin } from './models/database-plugin';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 export class PluginManager {
   private static instance: PluginManager;
   private plugins: Map<string, Plugin> = new Map();
   private static initialized = false;
   private logger = getLogger('LinkGator');
+  
+  // Calculate the equivalent of __dirname in ESM
+  private static currentFilePath = fileURLToPath(import.meta.url);
+  private static currentDir = path.dirname(PluginManager.currentFilePath);
+  private static pluginsDir = path.resolve(PluginManager.currentDir, '..');
 
   private constructor() {}
 
@@ -21,7 +29,11 @@ export class PluginManager {
       // Always ensure plugins are initialized when getting an instance
       // This is critical for server-side rendering where different contexts might exist
       if (!PluginManager.initialized) {
-        PluginManager.initializePlugins();
+        // Call initializePlugins asynchronously, but don't wait for it
+        // This is a compromise to keep the getInstance method synchronous
+        PluginManager.initializePlugins().catch(error => {
+          PluginManager.instance.logger.error`Failed to initialize plugins asynchronously: ${error}`;
+        });
       }
     }
     return PluginManager.instance;
@@ -31,7 +43,7 @@ export class PluginManager {
    * Initialize the plugin manager and register core plugins.
    * This method ensures plugins are only registered once, even if called multiple times.
    */
-  public static initializePlugins(): void {
+  public static async initializePlugins(): Promise<void> {
     if (PluginManager.initialized) {
       PluginManager.getInstance().logger.debug`Plugins already initialized, skipping registration`;
       return;
@@ -44,11 +56,22 @@ export class PluginManager {
       // Clear plugins map to avoid any stale state
       instance.plugins.clear();
       
-      // Register the Supabase database plugin
-      instance.register(new SupabaseDatabasePlugin());
+      // Automatically discover and register plugins
+      const discoveredPlugins = await PluginManager.discoverPlugins();
+      
+      if (discoveredPlugins.length === 0) {
+        instance.logger.warn`No plugins discovered automatically, falling back to default plugin`;
+        // Register default plugin as fallback
+        instance.register(new SupabaseDatabasePlugin());
+      } else {
+        // Register all discovered plugins
+        for (const plugin of discoveredPlugins) {
+          instance.register(plugin);
+        }
+      }
       
       PluginManager.initialized = true;
-      instance.logger.info`Plugin initialization completed successfully`;
+      instance.logger.info`Plugin initialization completed successfully with ${instance.plugins.size} plugins`;
     } catch (error) {
       instance.logger.error`Failed to initialize plugins: ${error}`;
       // Don't set initialized to true if there was an error
@@ -80,8 +103,9 @@ export class PluginManager {
   public getByType<T extends Plugin>(): T[] {
     // Ensure plugins are initialized
     if (this.plugins.size === 0) {
-      PluginManager.initialized = false;
-      PluginManager.initializePlugins();
+      // Don't try to initialize plugins here, as it's now async
+      // Just log a warning
+      this.logger.warn`Attempting to get plugins before initialization is complete`;
     }
     
     // Handle different generic types
@@ -228,5 +252,77 @@ export class PluginManager {
     }
 
     return Result.ok(latestGoodResult);
+  }
+
+  /**
+   * Scan the plugins directory for plugin files
+   * This finds all plugin.ts files in subdirectories of the plugins folder
+   * @private
+   */
+  private static async discoverPlugins(): Promise<Plugin[]> {
+    const instance = PluginManager.getInstance();
+    const plugins: Plugin[] = [];
+    
+    try {
+      if (!fs.existsSync(PluginManager.pluginsDir)) {
+        instance.logger.error`Plugins directory not found at ${PluginManager.pluginsDir}`;
+        return plugins;
+      }
+      
+      // Get all subdirectories in the plugins folder
+      const items = fs.readdirSync(PluginManager.pluginsDir);
+      const dirs = items.filter(item => {
+        const itemPath = path.join(PluginManager.pluginsDir, item);
+        return fs.statSync(itemPath).isDirectory() && item !== 'models';
+      });
+      
+      instance.logger.debug`Found ${dirs.length} potential plugin directories`;
+      
+      // Check each directory for a plugin.ts file
+      for (const dir of dirs) {
+        const pluginFilePath = path.join(PluginManager.pluginsDir, dir, 'plugin.ts');
+        
+        if (fs.existsSync(pluginFilePath)) {
+          try {
+            // Dynamically import the plugin module
+            // We use a require with path resolution here since import() is static in TypeScript
+            // In a bundled environment, this would need to be replaced with a bundler-specific approach
+            const pluginModule = require(pluginFilePath);
+            
+            // Try to find a plugin class in the module
+            let pluginInstance: Plugin | null = null;
+            
+            // Check default export first
+            if (pluginModule.default && typeof pluginModule.default === 'function') {
+              pluginInstance = new pluginModule.default();
+            } 
+            // Check for named exports that might be plugin classes
+            else {
+              for (const exportName in pluginModule) {
+                if (exportName.includes('Plugin') && typeof pluginModule[exportName] === 'function') {
+                  pluginInstance = new pluginModule[exportName]();
+                  break;
+                }
+              }
+            }
+            
+            if (pluginInstance && typeof pluginInstance.id === 'string') {
+              instance.logger.info`Discovered plugin: ${pluginInstance.id} from ${dir}/plugin.ts`;
+              plugins.push(pluginInstance);
+            } else {
+              instance.logger.warn`No valid plugin found in ${dir}/plugin.ts`;
+            }
+          } catch (error) {
+            instance.logger.error`Failed to load plugin from ${dir}/plugin.ts: ${error}`;
+          }
+        } else {
+          instance.logger.debug`No plugin.ts file found in ${dir}`;
+        }
+      }
+    } catch (error) {
+      instance.logger.error`Error discovering plugins: ${error}`;
+    }
+    
+    return plugins;
   }
 }
