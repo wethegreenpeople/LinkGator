@@ -62,6 +62,14 @@ export class MongoDBDatabasePlugin implements DatabasePlugin {
     return Result.ok({ session: { user: { email } } });
   }
   
+  async checkIfLoggedIn(): Promise<Result<{session: any} | null, Error>> {
+    this.logger.info`MongoDB checking if user is logged in`;
+    // In a real implementation, this would check MongoDB for a valid session
+    // For now, return a mock result
+    // For testing purposes, this always returns not logged in
+    return Result.ok(null);
+  }
+  
   async getFollowers(): Promise<Result<string[], Error>> {
     this.logger.info`Getting followers from MongoDB`;
     // Return a mock list of followers

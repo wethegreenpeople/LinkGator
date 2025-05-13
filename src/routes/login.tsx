@@ -84,8 +84,7 @@ const signUp = action(async (formData: FormData) => {
 
 const logIn = action(async (formData: FormData) => {
     "use server"
-    
-    
+
     const pluginManager = PluginManager.getInstance();
     const usernameInput = formData.get("username")?.toString() ?? "";
     const password = formData.get("password")?.toString() ?? "";
@@ -149,15 +148,31 @@ const logIn = action(async (formData: FormData) => {
 
 const checkIfLoggedIn = query(async () => {
     "use server"
-    const supabase = createServerSupabase();
-    const session = await supabase.auth.getSession();
-
-    if (session.data.session) {
-        throw redirect("./");
+    const pluginManager = PluginManager.getInstance();
+    
+    try {
+        const sessionResult = await pluginManager.executeForPlugins<DatabasePlugin, {session: any} | null>(
+            async (plugin) => await plugin.checkIfLoggedIn()
+        );
+        
+        if (sessionResult.isError()) {
+            logger.error`Session check error: ${sessionResult.error}`;
+            return null;
+        }
+        
+        if (sessionResult.value?.session) {
+            throw redirect("./");
+        }
+        
+        return null;
+    } catch (error) {
+        if (error instanceof Response) {
+            throw error; // Rethrow redirect responses
+        }
+        logger.error`Unexpected error in checkIfLoggedIn: ${error}`;
+        return null;
     }
-
-    return null;
-  }, "checkIfLoggedIn");
+}, "checkIfLoggedIn");
   
 
 export default function Login() {
