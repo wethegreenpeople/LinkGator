@@ -15,10 +15,8 @@ export class PluginManager {
   private static initialized = false;
   private logger = getLogger('LinkGator');
   
-  // Calculate the equivalent of __dirname in ESM
   private static currentFilePath = fileURLToPath(import.meta.url);
   private static currentDir = path.dirname(PluginManager.currentFilePath);
-  private static pluginsDir = path.resolve(PluginManager.currentDir, '..');
 
   private constructor() {}
 
@@ -43,8 +41,8 @@ export class PluginManager {
    * Initialize the plugin manager and register core plugins.
    * This method ensures plugins are only registered once, even if called multiple times.
    */
-  public static async initializePlugins(): Promise<void> {
-    if (PluginManager.initialized) {
+  public static async initializePlugins(force: boolean = false): Promise<void> {
+    if (PluginManager.initialized && !force) {
       PluginManager.getInstance().logger.debug`Plugins already initialized, skipping registration`;
       return;
     }
@@ -59,15 +57,8 @@ export class PluginManager {
       // Automatically discover and register plugins
       const discoveredPlugins = await PluginManager.discoverPlugins();
       
-      if (discoveredPlugins.length === 0) {
-        instance.logger.warn`No plugins discovered automatically, falling back to default plugin`;
-        // Register default plugin as fallback
-        instance.register(new SupabaseDatabasePlugin());
-      } else {
-        // Register all discovered plugins
-        for (const plugin of discoveredPlugins) {
-          instance.register(plugin);
-        }
+      for (const plugin of discoveredPlugins) {
+        instance.register(plugin);
       }
       
       PluginManager.initialized = true;
@@ -264,15 +255,15 @@ export class PluginManager {
     const plugins: Plugin[] = [];
     
     try {
-      if (!fs.existsSync(PluginManager.pluginsDir)) {
-        instance.logger.error`Plugins directory not found at ${PluginManager.pluginsDir}`;
+      if (!fs.existsSync(PluginManager.currentDir)) {
+        instance.logger.error`Plugins directory not found at ${PluginManager.currentDir}`;
         return plugins;
       }
       
       // Get all subdirectories in the plugins folder
-      const items = fs.readdirSync(PluginManager.pluginsDir);
+      const items = fs.readdirSync(PluginManager.currentDir);
       const dirs = items.filter(item => {
-        const itemPath = path.join(PluginManager.pluginsDir, item);
+        const itemPath = path.join(PluginManager.currentDir, item);
         return fs.statSync(itemPath).isDirectory() && item !== 'models';
       });
       
@@ -280,14 +271,15 @@ export class PluginManager {
       
       // Check each directory for a plugin.ts file
       for (const dir of dirs) {
-        const pluginFilePath = path.join(PluginManager.pluginsDir, dir, 'plugin.ts');
+        const pluginFilePath = path.join(PluginManager.currentDir, dir, 'plugin.ts');
         
         if (fs.existsSync(pluginFilePath)) {
           try {
-            // Dynamically import the plugin module
-            // We use a require with path resolution here since import() is static in TypeScript
-            // In a bundled environment, this would need to be replaced with a bundler-specific approach
-            const pluginModule = require(pluginFilePath);
+            // Convert file path to URL format for import()
+            const fileUrl = `file://${pluginFilePath.replace(/\\/g, '/')}`;
+            
+            // Dynamically import the plugin module using ESM dynamic import
+            const pluginModule = await import(fileUrl);
             
             // Try to find a plugin class in the module
             let pluginInstance: Plugin | null = null;
