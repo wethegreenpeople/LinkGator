@@ -2,6 +2,7 @@
 import { redirect } from "@solidjs/router";
 import { PluginManager } from "~/plugins/manager";
 import { AuthPlugin } from "~/plugins/models/auth-plugin";
+import { PluginType } from "~/plugins/models/plugin";
 
 export async function GET() {
     const pluginManager = PluginManager.getInstance();
@@ -9,7 +10,8 @@ export async function GET() {
     try {
         // Wait for the plugin logout to complete
         const result = await pluginManager.executeForPlugins<AuthPlugin, any>(
-            async (plugin) => await plugin.logOutUser()
+            async (plugin) => await plugin.logOutUser(),
+            PluginType.AUTH
         );
         
         // Check for errors from the plugin logout
