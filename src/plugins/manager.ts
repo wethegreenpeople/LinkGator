@@ -1,6 +1,4 @@
 import { Result } from 'typescript-result';
-import { SupabaseDatabasePlugin } from './supabase/plugin';
-import { MongoDBDatabasePlugin } from './mongodb/plugin';
 import { Plugin, PluginType } from './models/plugin';
 import { PluginManagerError, PluginManagerErrorType } from './models/plugin-manager';
 import { getLogger } from '../utils/logger';
@@ -91,7 +89,7 @@ export class PluginManager {
    * Get all plugins of a specific type
    * Uses runtime type checking based on the pluginType property
    */
-  public getByType<T extends Plugin>(): T[] {
+  public getByType<T extends Plugin>(type: PluginType): T[] {
     // Ensure plugins are initialized
     if (this.plugins.size === 0) {
       // Don't try to initialize plugins here, as it's now async
@@ -99,59 +97,18 @@ export class PluginManager {
       this.logger.warn`Attempting to get plugins before initialization is complete`;
     }
     
-    // Handle different generic types
-    let expectedType: PluginType | undefined;
-    
-    // Using Function constructor name to identify the type parameter
-    const typeName = this.getTypeParameterName<T>();
-    
-    // Map type name to plugin type
-    if (typeName.includes('DatabasePlugin')) {
-      expectedType = PluginType.DATABASE;
-    } else {
-      return Array.from(this.plugins.values()) as T[];
-    }
-    
     // Filter plugins by type
     const filteredPlugins = Array.from(this.plugins.values())
       .filter(plugin => {
-        
         // Handle arrays and single values
         if (Array.isArray(plugin.pluginType)) {
-          return plugin.pluginType.includes(expectedType!);
+          return plugin.pluginType.includes(type);
         } else {
-          return plugin.pluginType === expectedType;
+          return plugin.pluginType === type;
         }
       }) as T[];
       
     return filteredPlugins;
-  }
-  
-  /**
-   * Helper method to try to determine the type parameter name
-   * This is a best-effort approach as TypeScript erases types at runtime
-   */
-  private getTypeParameterName<T>(): string {
-    try {
-      // Check for common plugin interfaces
-      if (this.isTypeFor<DatabasePlugin, T>()) {
-        return 'DatabasePlugin';
-      }
-      
-      // Default type name
-      return 'Plugin';
-    } catch (error) {
-      return 'Plugin';
-    }
-  }
-  
-  /**
-   * Type checking helper
-   */
-  private isTypeFor<S, T>(): boolean {
-    // This is a dummy method that always returns true when called
-    // It's used as a way to extract type information during runtime
-    return true;
   }
 
   public getById<T extends Plugin>(id: string): T {
@@ -194,9 +151,10 @@ export class PluginManager {
    * @returns Result containing the latest successful value or errors encountered
    */
   public async executeForPlugins<T extends Plugin, R>(
-    callback: (plugin: T) => Promise<Result<R, Error> | R> | Result<R, Error> | R
+    callback: (plugin: T) => Promise<Result<R, Error> | R> | Result<R, Error> | R,
+    type: PluginType
   ): Promise<Result<R | null, Error[]>> {
-    const plugins = this.getByType<T>();
+    const plugins = this.getByType<T>(type);
     
     let latestGoodResult: R | null = null;
     const errors: Error[] = [];

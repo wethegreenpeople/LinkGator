@@ -8,6 +8,8 @@ import { supabaseClient } from "~/plugins/supabase/supabase-client";
 import { AuthError, Session } from "@supabase/supabase-js";
 import { PluginManager } from "~/plugins/manager";
 import { DatabasePlugin } from "~/plugins/models/database-plugin";
+import { AuthPlugin } from "~/plugins/models/auth-plugin";
+import { PluginType } from "~/plugins/models/plugin";
 
 const logger = getLogger(["LinkGator"]);
 
@@ -22,8 +24,9 @@ const signUp = action(async (formData: FormData) => {
     const username = formData.get("username")?.toString() ?? "";
     const actorUri = `https://${process.env.DOMAIN}/users/${username}`;
 
-    const signUpResult = await pluginManager.executeForPlugins<DatabasePlugin, {user: any}>(
-        async (plugin) => await plugin.signUpUser(email, password)
+    const signUpResult = await pluginManager.executeForPlugins<AuthPlugin, {user: any}>(
+        async (plugin) => await plugin.signUpUser(email, password),
+        PluginType.AUTH
     );
 
     if (signUpResult.isError()) {
@@ -38,7 +41,8 @@ const signUp = action(async (formData: FormData) => {
     }
 
     const profileResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
-        async (plugin) => await plugin.createUserProfile(authId, actorUri)
+        async (plugin) => await plugin.createUserProfile(authId, actorUri),
+        PluginType.DATABASE
     );
 
     if (profileResult.isError()) {
@@ -56,7 +60,8 @@ const signUp = action(async (formData: FormData) => {
             actorUri, 
             exportedPublicKey, 
             exportedPrivateKey
-        )
+        ),
+        PluginType.DATABASE
     );
 
     if (keysResult.isError()) {
@@ -64,8 +69,9 @@ const signUp = action(async (formData: FormData) => {
         return new Response("Server Error", { status: 500 });
     }
 
-    const signInResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
-        async (plugin) => await plugin.signInUser(email, password)
+    const signInResult = await pluginManager.executeForPlugins<AuthPlugin, any>(
+        async (plugin) => await plugin.signInUser(email, password),
+        PluginType.AUTH
     );
 
     if (signInResult.isError()) {
@@ -131,10 +137,11 @@ const logIn = action(async (formData: FormData) => {
     }
     
     const email = userResponse.data.user.email;
-    const signInResult = await pluginManager.executeForPlugins<DatabasePlugin, any>(
+    const signInResult = await pluginManager.executeForPlugins<AuthPlugin, any>(
         async (plugin) => {
             return await plugin.signInUser(email, password);
-        }
+        },
+        PluginType.AUTH
     );
     
     if (signInResult.isError()) {
@@ -156,8 +163,9 @@ const checkIfLoggedIn = query(async () => {
     }
     
     try {
-        const sessionResult = await pluginManager.executeForPlugins<DatabasePlugin, {session: any} | null>(
-            async (plugin) => await plugin.checkIfLoggedIn()
+        const sessionResult = await pluginManager.executeForPlugins<AuthPlugin, {session: any} | null>(
+            async (plugin) => await plugin.checkIfLoggedIn(),
+            PluginType.AUTH
         );
         
         if (sessionResult.isError()) {

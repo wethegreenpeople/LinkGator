@@ -79,17 +79,6 @@ export class SupabaseDatabasePlugin implements DatabasePlugin {
     return Result.ok(response.data);
   }
   
-  async signUpUser(email: string, password: string): Promise<Result<{user: any}, Error>> {
-    const signUpResponse = await supabaseService.auth.signUp({ email, password });
-    
-    if (signUpResponse.error) {
-      this.logger.error`Signup error: ${signUpResponse.error.message}`;
-      return Result.error(new Error(`Signup failed: ${signUpResponse.error.message}`));
-    }
-    
-    return Result.ok({ user: signUpResponse.data.user });
-  }
-  
   async createUserProfile(authId: string, actorUri: string): Promise<Result<any, Error>> {
     const updateProfileResponse = await supabaseService.from(DatabaseTableNames.Profiles).insert({
       auth_id: authId,
@@ -118,49 +107,6 @@ export class SupabaseDatabasePlugin implements DatabasePlugin {
     }
     
     return Result.ok(keyResponse.data);
-  }
-  
-  async signInUser(email: string, password: string): Promise<Result<any, Error>> {
-    const serverSupabase = createServerSupabase();
-    const signInResponse = await serverSupabase.auth.signInWithPassword({ email, password });
-
-    if (signInResponse.error) {
-      this.logger.error`Sign in error: ${signInResponse.error.message}`;
-      return Result.error(new Error(`Sign in failed: ${signInResponse.error.message}`));
-    }
-    this.logger.debug`Sign in successful: ${JSON.stringify(signInResponse.data)}`
-    
-    return Result.ok(signInResponse.data);
-  }
-
-  async logOutUser(): Promise<Result<any, Error>> {
-    const serverSupabase = createServerSupabase();
-    const signInResponse = await serverSupabase.auth.signOut();
-    
-    if (signInResponse.error) {
-      this.logger.error`Sign out error: ${signInResponse.error.message}`;
-      return Result.error(new Error(`Sign out failed: ${signInResponse.error.message}`));
-    }
-    
-    return Result.ok(signInResponse);
-  }
-  
-  async checkIfLoggedIn(): Promise<Result<{session: any} | null, Error>> {
-    try {
-      const serverSupabase = createServerSupabase();
-      const { data, error } = await serverSupabase.auth.getSession();
-      
-      if (error) {
-        this.logger.error`Session check error: ${error.message}`;
-        return Result.error(new Error(`Session check failed: ${error.message}`));
-      }
-      
-      // Return the session if it exists, otherwise null
-      return Result.ok(data.session ? { session: data.session } : null);
-    } catch (error) {
-      this.logger.error`Unexpected error in checkIfLoggedIn: ${error}`;
-      return Result.error(error instanceof Error ? error : new Error(String(error)));
-    }
   }
   
   async getFollowers(): Promise<Result<string[], Error>> {

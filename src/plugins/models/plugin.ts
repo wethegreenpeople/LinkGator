@@ -4,7 +4,8 @@
 
 // Plugin types for runtime type checking
 export enum PluginType {
-  DATABASE = 'database'
+  DATABASE = 'database',
+  AUTH = 'auth'
 }
 
 // Base plugin interface that all plugins should implement
