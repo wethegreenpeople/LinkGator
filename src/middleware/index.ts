@@ -13,6 +13,7 @@ import '@dotenvx/dotenvx/config'
 import { PluginManager } from "~/plugins/manager";
 import { DatabasePlugin } from "~/plugins/models/database-plugin";
 import { Result } from "typescript-result";
+import { PluginType } from "~/plugins/models/plugin";
 
 const logger = getLogger(["LinkGator"]);
 const pluginManager = PluginManager.getInstance();
@@ -23,7 +24,7 @@ const federation = createFederation<void>({
 
 federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => {
     const profileResult = 
-        await pluginManager.executeForPlugins<DatabasePlugin, Result<{}, Error>>((plugin) => plugin.getProfileFromActorUri(ctx.getActorUri(identifier).toString()));
+        await pluginManager.executeForPlugins<DatabasePlugin, Result<{}, Error>>((plugin) => plugin.getProfileFromActorUri(ctx.getActorUri(identifier).toString()), PluginType.DATABASE);
     
     if (profileResult.isError() || profileResult.value === null) {
         return null;
@@ -42,7 +43,8 @@ federation.setActorDispatcher("/users/{identifier}", async (ctx, identifier) => 
     .setKeyPairsDispatcher(async (ctx, identifier) => {
         // With the refactored executeForPlugins, we can now pass the Result directly
         const keysResult = await pluginManager.executeForPlugins<DatabasePlugin, { private_key: string; public_key: string }>(async (plugin) => 
-            await plugin.getKeysForActor(ctx.getActorUri(identifier).toString())
+            await plugin.getKeysForActor(ctx.getActorUri(identifier).toString()),
+            PluginType.DATABASE
         );
 
         if (keysResult.isError() || !keysResult.value) {
@@ -90,7 +92,8 @@ federation
             await plugin.addFollower(
                 follow.actorId?.href.toString() ?? "", 
                 ctx.getActorUri(parsed.identifier).toString()
-            )
+            ),
+            PluginType.DATABASE
         );
     })
     .on(Undo, async (ctx, undo) => {
@@ -99,7 +102,8 @@ federation
         }
         logger.debug`Undo request: ${undo} for ${undo.actorId.href}`;
         await pluginManager.executeForPlugins<DatabasePlugin, Result<any, Error>>(async (plugin) => 
-            await plugin.removeFollower(undo.actorId?.href.toString() ?? "")
+            await plugin.removeFollower(undo.actorId?.href.toString() ?? ""),
+            PluginType.DATABASE
         );
     });
 
