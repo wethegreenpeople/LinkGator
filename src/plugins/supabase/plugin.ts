@@ -4,25 +4,37 @@ import { DatabasePlugin } from '../models/database-plugin';
 import { Result } from 'typescript-result';
 import { supabaseService } from '~/plugins/supabase/supabase-server';
 import { DatabaseTableNames } from '~/models/database-tables';
-import { PluginManager } from '~/plugins/manager';
-import { Plugin, PluginType } from '../models/plugin';
-// Update the import to use logtape directly
+import { PluginType, BasePluginSettings } from '../models/plugin'; // Added BasePluginSettings
+import { AbstractBasePlugin } from '../models/base-plugin'; // Added AbstractBasePlugin
 import { getLogger } from '@logtape/logtape';
-import { createServerSupabase } from '~/plugins/supabase/supabase-server';
-import { supabaseClient } from './supabase-client';
+import { fileURLToPath } from 'url'; // Added for ES Module path resolution
+import * as path from 'path'; // Added for path.dirname
+
+// Define specific settings for SupabaseDatabase, extending base settings
+interface SupabaseDatabaseSettings extends BasePluginSettings {
+  // Add any supabase-database-specific settings here if needed in the future
+}
 
 /**
  * Supabase implementation of the DatabasePlugin interface
  */
-export class SupabaseDatabasePlugin implements DatabasePlugin {
+export class SupabaseDatabasePlugin extends AbstractBasePlugin<SupabaseDatabaseSettings> implements DatabasePlugin {
   id = 'supabase-database';
   name = 'Supabase Database';
   version = '1.0.0';
   description = 'Supabase implementation for database access';
   pluginType = PluginType.DATABASE;
 
-  // Update to use array parameter like in login.tsx
-  logger = getLogger(["LinkGator"]);
+  // Logger is inherited from AbstractBasePlugin
+
+  constructor() {
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const currentDir = path.dirname(currentFilePath);
+    // Provide default settings for the database plugin
+    super(currentDir, { enabled: true }); // Defaulting to true, can be overridden by settings.json
+  }
+
+  // loadSettings() and isEnabled() are inherited from AbstractBasePlugin
 
   async getProfileFromActorUri(actorUri: string): Promise<Result<{}, Error>> {
     const response = await supabaseService.from(DatabaseTableNames.Profiles)
