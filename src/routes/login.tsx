@@ -191,192 +191,155 @@ const checkIfLoggedIn = query(async () => {
 export default function Login() {
     const [isLogin, setIsLogin] = createSignal(true);
     createAsync(() => checkIfLoggedIn());
-    
-    return (
-        <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      return (
+        <div class="min-h-screen bg-background flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
             <div class="sm:mx-auto sm:w-full sm:max-w-md">
-                <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                    {isLogin() ? "Sign in to your account" : "Create a new account"}
-                </h2>
-                <p class="mt-2 text-center text-sm text-gray-600">
+                <h1 class="mt-6 text-center text-4xl font-light text-text-primary tracking-tight">
+                    {isLogin() ? "Welcome back" : "Join us"}
+                </h1>
+                <p class="mt-4 text-center text-base text-text-secondary">
                     {isLogin() ? "Don't have an account? " : "Already have an account? "}
                     <button
                         type="button"
-                        onClick={() => {
-                            setIsLogin(!isLogin());
-                        }}
-                        class="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none"
+                        onClick={() => setIsLogin(!isLogin())}
+                        class="font-medium text-primary hover:text-primary-light transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded px-1"
                     >
                         {isLogin() ? "Sign up" : "Sign in"}
                     </button>
                 </p>
-            </div>
-
-            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-                    <Show when={isLogin()}>
-                        <form action={logIn} method="post" class="text-black">
+            </div>            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div class="bg-card py-8 px-6 shadow-elevation-2 rounded-xl border border-outline-variant/50">
+                    <Show when={isLogin()}>                        <form action={logIn} method="post">
                             <div class="space-y-6">
                                 <Show when={false}>
-                                    <div class="bg-red-50 p-4 rounded-md">
+                                    <div class="bg-error-container border border-error/50 p-4 rounded-lg">
                                         <div class="flex">
                                             <div class="flex-shrink-0">
-                                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <svg class="h-5 w-5 text-error" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                                                 </svg>
                                             </div>
                                             <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-red-800"></h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </Show>
-
-                                <Show when={false}>
-                                    <div class="bg-green-50 p-4 rounded-md">
-                                        <div class="flex">
-                                            <div class="flex-shrink-0">
-                                                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                                </svg>
-                                            </div>
-                                            <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-green-800">Registration successful! You can now sign in.</h3>
+                                                <h3 class="text-sm font-medium text-on-error-container"></h3>
                                             </div>
                                         </div>
                                     </div>
                                 </Show>
 
                                 <div>
-                                    <label for="username" class="block text-sm font-medium text-gray-700">
+                                    <label for="username" class="block text-sm font-medium text-text-primary mb-2">
                                         Username
-                                    </label>
-                                    <div class="mt-1">
-                                        <input
-                                            id="username"
-                                            name="username"
-                                            type="text"
-                                            required
-                                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        />
-                                    </div>
+                                    </label>                                    <input
+                                        id="username"
+                                        name="username"
+                                        type="text"
+                                        required
+                                        class="block w-full px-4 py-3 bg-input border border-input-border rounded-md text-text-primary placeholder-text-disabled focus:outline-none focus:ring-2 focus:ring-input-focus focus:border-transparent transition-all duration-200"
+                                        placeholder="Enter your username"
+                                    />
                                 </div>
 
                                 <div>
-                                    <label for="password" class="block text-sm font-medium text-gray-700">
+                                    <label for="password" class="block text-sm font-medium text-text-primary mb-2">
                                         Password
-                                    </label>
-                                    <div class="mt-1">
-                                        <input
-                                            id="password"
-                                            name="password"
-                                            type="password"
-                                            autocomplete="new-password"
-                                            required
-                                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <button
-                                        type="submit"
-                                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    >
-                                        Create account
-                                    </button>
-                                </div>
+                                    </label>                                    <input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        autocomplete="current-password"
+                                        required
+                                        class="block w-full px-4 py-3 bg-input border border-input-border rounded-md text-text-primary placeholder-text-disabled focus:outline-none focus:ring-2 focus:ring-input-focus focus:border-transparent transition-all duration-200"
+                                        placeholder="Enter your password"
+                                    />
+                                </div>                                <button
+                                    type="submit"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-card transition-all duration-200 shadow-elevation-1"
+                                >
+                                    Sign in
+                                </button>
                             </div>
                         </form>
-                    </Show>
-                    <Show when={!isLogin()}>
-                        <form action={signUp} method="post" class="text-black">
-                            <div class="space-y-6">
-                                <Show when={false}>
-                                    <div class="bg-red-50 p-4 rounded-md">
+                    </Show>                    <Show when={!isLogin()}>
+                        <form action={signUp} method="post">
+                            <div class="space-y-6">                                <Show when={false}>
+                                    <div class="bg-error-container border border-error/50 p-4 rounded-lg">
                                         <div class="flex">
                                             <div class="flex-shrink-0">
-                                                <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <svg class="h-5 w-5 text-error" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                                                 </svg>
                                             </div>
                                             <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-red-800"></h3>
+                                                <h3 class="text-sm font-medium text-on-error-container"></h3>
                                             </div>
                                         </div>
                                     </div>
                                 </Show>
 
                                 <Show when={false}>
-                                    <div class="bg-green-50 p-4 rounded-md">
+                                    <div class="bg-success-container border border-success/50 p-4 rounded-lg">
                                         <div class="flex">
                                             <div class="flex-shrink-0">
-                                                <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <svg class="h-5 w-5 text-success" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                                                 </svg>
                                             </div>
                                             <div class="ml-3">
-                                                <h3 class="text-sm font-medium text-green-800">Registration successful! You can now sign in.</h3>
+                                                <h3 class="text-sm font-medium text-on-success-container">Registration successful! You can now sign in.</h3>
                                             </div>
                                         </div>
                                     </div>
                                 </Show>
 
                                 <div>
-                                    <label for="username" class="block text-sm font-medium text-gray-700">
+                                    <label for="username" class="block text-sm font-medium text-text-primary mb-2">
                                         Username
-                                    </label>
-                                    <div class="mt-1">
-                                        <input
-                                            id="username"
-                                            name="username"
-                                            type="text"
-                                            required
-                                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        />
-                                    </div>
+                                    </label>                                    <input
+                                        id="username"
+                                        name="username"
+                                        type="text"
+                                        required
+                                        class="block w-full px-4 py-3 bg-input border border-input-border rounded-md text-text-primary placeholder-text-disabled focus:outline-none focus:ring-2 focus:ring-input-focus focus:border-transparent transition-all duration-200"
+                                        placeholder="Choose a username"
+                                    />
                                 </div>
 
                                 <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700">
+                                    <label for="email" class="block text-sm font-medium text-text-primary mb-2">
                                         Email address
                                     </label>
-                                    <div class="mt-1">
-                                        <input
-                                            id="email"
-                                            name="email"
-                                            type="email"
-                                            autocomplete="email"
-                                            required
-                                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        />
-                                    </div>
+                                    <input
+                                        id="email"
+                                        name="email"
+                        type="email"
+                                        autocomplete="email"
+                                        required
+                                        class="block w-full px-4 py-3 bg-input border border-input-border rounded-md text-text-primary placeholder-text-disabled focus:outline-none focus:ring-2 focus:ring-input-focus focus:border-transparent transition-all duration-200"
+                                        placeholder="Enter your email"
+                                    />
                                 </div>
 
                                 <div>
-                                    <label for="password" class="block text-sm font-medium text-gray-700">
+                                    <label for="password" class="block text-sm font-medium text-text-primary mb-2">
                                         Password
                                     </label>
-                                    <div class="mt-1">
-                                        <input
-                                            id="password"
-                                            name="password"
-                                            type="password"
-                                            autocomplete="new-password"
-                                            required
-                                            class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                        />
-                                    </div>
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type="password"
+                                        autocomplete="new-password"
+                                        required
+                                        class="block w-full px-4 py-3 bg-input border border-input-border rounded-md text-text-primary placeholder-text-disabled focus:outline-none focus:ring-2 focus:ring-input-focus focus:border-transparent transition-all duration-200"
+                                        placeholder="Create a password"
+                                    />
                                 </div>
 
-                                <div>
-                                    <button
-                                        type="submit"
-                                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    >
-                                        Create account
-                                    </button>
-                                </div>
+                                <button
+                                    type="submit"
+                                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md text-sm font-medium text-on-primary bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-card transition-all duration-200 shadow-elevation-1"
+                                >
+                                    Create account
+                                </button>
                             </div>
                         </form>
                     </Show>
