@@ -143,6 +143,24 @@ export class PluginManager {
   }
 
   /**
+   * Update plugin settings
+   */
+  public updatePluginSettings(pluginId: string, settingKey: string, value: any): void {
+    const plugin = this.getById<AbstractBasePlugin<any>>(pluginId);
+    
+    if (!(plugin instanceof AbstractBasePlugin)) {
+      throw new PluginManagerError(
+        PluginManagerErrorType.INVALID_PLUGIN,
+        `Plugin ${pluginId} is not an AbstractBasePlugin`
+      );
+    }
+
+    plugin.settings[settingKey] = value;
+    plugin.saveSettings();
+    this.logger.debug`Updated setting ${settingKey} for plugin ${pluginId}`;
+  }
+
+  /**
    * Helper that executes a callback function on multiple plugins of the same type
    * @param callback Function to execute on each plugin
    * @returns Result containing the latest successful value or errors encountered

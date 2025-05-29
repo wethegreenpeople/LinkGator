@@ -42,6 +42,18 @@ export abstract class AbstractBasePlugin<T extends BasePluginSettings> implement
     }
   }
 
+  public saveSettings(): void {
+    try {
+      const settingsPath = path.resolve(this.pluginDirectory, 'settings.json');
+      const settingsData = JSON.stringify(this.settings, null, 2);
+      fs.writeFileSync(settingsPath, settingsData, 'utf-8');
+      this.logger.debug`Saved settings to ${settingsPath}`;
+    } catch (error) {
+      this.logger.error`Failed to save settings: ${error}`;
+      throw error;
+    }
+  }
+
   public isEnabled(): boolean {
     // Optionally, reload settings dynamically if needed for POC, 
     // but generally settings are loaded at init or via a specific reload mechanism.

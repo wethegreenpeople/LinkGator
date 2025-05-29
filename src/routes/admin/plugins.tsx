@@ -1,9 +1,10 @@
 import { For, Show } from "solid-js";
-import { createAsync, query } from "@solidjs/router";
+import { createAsync, query, revalidate } from "@solidjs/router";
 import { PluginManager } from "~/plugins/manager";
 import { AbstractBasePlugin } from "~/plugins/models/base-plugin";
 
 interface PluginDisplayInfo {
+  id: string;
   name: string;
   version: string;
   description: string;
@@ -29,17 +30,16 @@ const getPluginData = query(async () => {
         // Settings should be loaded during registration or by accessing plugin.settings which calls loadSettings if needed.
         // To be safe, we can call it, or rely on the getter to do its job.
         // Let's ensure it's called if not present, but it's synchronous.
-        if (!plugin.settings) plugin.loadSettings();
-
-        pluginInfo.push({
+        if (!plugin.settings) plugin.loadSettings();        pluginInfo.push({
+          id: plugin.id,
           name: plugin.name,
           version: plugin.version,
           description: plugin.description,
           settings: plugin.settings || { enabled: plugin.isEnabled() }, // Fallback for settings
         });
       } catch (error: any) {
-        console.error(`Error processing plugin ${plugin.name}:`, error);
-        pluginInfo.push({
+        console.error(`Error processing plugin ${plugin.name}:`, error);        pluginInfo.push({
+          id: plugin.id,
           name: plugin.name,
           version: plugin.version,
           description: plugin.description,
@@ -59,6 +59,26 @@ export const route = {
 export default function PluginManagerPage() {
   const plugins = createAsync(() => getPluginData());
 
+  const updateSetting = async (pluginId: string, settingKey: string, value: any) => {
+    try {
+      const response = await fetch(`/api/plugins/${pluginId}/settings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ settingKey, value }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update setting');
+      }
+      
+      revalidate(getPluginData.key);
+    } catch (error) {
+      console.error('Error updating setting:', error);
+    }
+  };
+
   return (
     <div class="container mx-auto p-4">
       <h1 class="text-2xl font-bold mb-6">Plugin Management</h1>
@@ -70,12 +90,21 @@ export default function PluginManagerPage() {
               <p class="text-gray-700 mb-4">{plugin.description}</p>
               <Show when={plugin.error}>
                 <p class="text-red-500 mb-2">Error: {plugin.error}</p>
-              </Show>
-              <h3 class="text-lg font-semibold mb-2">Settings:</h3>
+              </Show>              <h3 class="text-lg font-semibold mb-2">Settings:</h3>
               <Show when={Object.keys(plugin.settings).length > 0} fallback={<p class="text-sm text-gray-500">No settings available.</p>}>
-                <ul class="list-disc list-inside pl-4 space-y-1">
+                <ul class="list-none space-y-2">
                   <For each={Object.entries(plugin.settings)}>{([key, value]) => (
-                    <li><strong>{key}:</strong> {String(value)}</li>
+                    <li class="flex items-center justify-between">
+                      <strong class="mr-2">{key}:</strong>
+                      <Show when={typeof value === 'boolean'} fallback={<span>{String(value)}</span>}>
+                        <input
+                          type="checkbox"
+                          checked={value as boolean}
+                          onChange={(e) => updateSetting(plugin.id, key, e.target.checked)}
+                          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                      </Show>
+                    </li>
                   )}</For>
                 </ul>
               </Show>
