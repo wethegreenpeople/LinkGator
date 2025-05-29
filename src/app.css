@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Material 3 Dark Theme Colors */
+  /* Colors */
   --color-primary: oklch(0.7 0.15 240);
   --color-primary-light: oklch(0.8 0.12 240);
   --color-primary-dark: oklch(0.6 0.18 240);
@@ -40,69 +40,37 @@
   --color-warning-container: oklch(0.2 0.1 60);
   --color-on-warning: oklch(0.98 0.02 60);
   --color-on-warning-container: oklch(0.95 0.05 60);
-  
-  /* Elevation Shadows */
-  --shadow-elevation-1: 0 1px 3px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.12);
-  --shadow-elevation-2: 0 3px 6px oklch(0 0 0 / 0.16), 0 3px 6px oklch(0 0 0 / 0.08);
-  --shadow-elevation-3: 0 10px 20px oklch(0 0 0 / 0.16), 0 6px 6px oklch(0 0 0 / 0.08);
-  --shadow-elevation-4: 0 14px 28px oklch(0 0 0 / 0.16), 0 10px 10px oklch(0 0 0 / 0.08);
-  --shadow-elevation-5: 0 19px 38px oklch(0 0 0 / 0.16), 0 15px 12px oklch(0 0 0 / 0.08);
-  
-  /* Semantic Component Colors */
-  --color-card: var(--color-surface-container);
-  --color-card-elevated: var(--color-surface-container-high);
-  --color-header: var(--color-surface-container-highest);
-  --color-input: var(--color-surface-variant);
-  --color-input-border: var(--color-outline-variant);
-  --color-input-focus: var(--color-primary);
-  --color-divider: var(--color-outline-variant);
-  
-  /* Text Colors */
-  --color-text-primary: var(--color-on-surface);
-  --color-text-secondary: var(--color-on-surface-variant);
-  --color-text-disabled: oklch(0.5 0.02 240);
-  --color-text-inverse: var(--color-on-primary);
-  
-  /* Border Radius */
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-2xl: 2rem;
-  --radius-full: 9999px;
-    /* Spacing Scale */
-  --spacing-0: 0;
-  --spacing-1: 0.25rem;
-  --spacing-2: 0.5rem;
-  --spacing-3: 0.75rem;
-  --spacing-4: 1rem;
-  --spacing-5: 1.25rem;
-  --spacing-6: 1.5rem;
-  --spacing-8: 2rem;
-  --spacing-10: 2.5rem;
-  --spacing-12: 3rem;
-  --spacing-16: 4rem;
-  --spacing-20: 5rem;
-  --spacing-24: 6rem;
-  
-  /* Typography */
-  --font-display: "Inter", system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Tailwind Color Overrides */
+  --color-gray-50: oklch(0.98 0.02 240);
+  --color-gray-100: oklch(0.95 0.02 240);
+  --color-gray-200: oklch(0.92 0.02 240);
+  --color-gray-300: oklch(0.8 0.02 240);
+  --color-gray-400: oklch(0.65 0.02 240);
+  --color-gray-500: oklch(0.5 0.02 240);
+  --color-gray-600: oklch(0.35 0.02 240);
+  --color-gray-700: oklch(0.22 0.02 240);
+  --color-gray-800: oklch(0.16 0.02 240);
+  --color-gray-900: oklch(0.12 0.02 240);
+  --color-gray-950: oklch(0.08 0.02 240);
+
+  /* Box Shadow */
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.12);
+  --shadow: 0 3px 6px oklch(0 0 0 / 0.16), 0 3px 6px oklch(0 0 0 / 0.08);
+  --shadow-md: 0 10px 20px oklch(0 0 0 / 0.16), 0 6px 6px oklch(0 0 0 / 0.08);
+  --shadow-lg: 0 14px 28px oklch(0 0 0 / 0.16), 0 10px 10px oklch(0 0 0 / 0.08);
+  --shadow-xl: 0 19px 38px oklch(0 0 0 / 0.16), 0 15px 12px oklch(0 0 0 / 0.08);
+
+  /* Font Family */
+  --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
-  
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
+
+  /* Border Radius */
+  --radius: 0.5rem;
 }
 
 body {
   background-color: var(--color-background);
-  color: var(--color-text-primary);
-  font-family: var(--font-body);
+  color: var(--color-on-surface);
+  font-family: var(--font-sans);
 }

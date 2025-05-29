@@ -1,58 +1,24 @@
-import { A, createAsync, query } from "@solidjs/router";
+import { A } from "@solidjs/router";
 import { For } from "solid-js";
-import { Result } from "typescript-result";
-import Counter from "~/components/Counter";
-import { DatabaseTableNames } from "~/models/database-tables";
-import { PluginManager } from "~/plugins/manager";
-import { DatabasePlugin } from "~/plugins/models/database-plugin";
-import { PluginType } from "~/plugins/models/plugin";
-import { supabaseService } from "~/plugins/supabase/supabase-server";
-
-const getFollowers = query(async () => {
-  "use server"
-
-  const pluginManager = PluginManager.getInstance();
-  const followersResult = await pluginManager.executeForPlugins<DatabasePlugin, string[]>(
-    async (plugin) => await plugin.getFollowers(),
-    PluginType.STORAGE
-  );
-  
-  if (followersResult.isError()) {
-    console.error("Error fetching followers:", followersResult.error);
-    return [];
-  }
-  
-  return followersResult.value;
-}, "getFollowers");
-
-export const route = {
-  preload: () => getFollowers()
-}
+import { PostCard } from "~/components/PostCard";
+import { mockPosts } from "~/lib/mockData";
 
 export default function Home() {
-  const followers = createAsync(() => getFollowers());
-
   return (
-    <main class="text-center mx-auto text-gray-700 p-4">
-      <h1 class="max-6-xs text-6xl text-sky-700 font-thin uppercase my-16">Hello world!</h1>
-      <ul class="text-white">
-        <For each={followers()}>{(follower) => <li>{follower}</li>}</For>
-      </ul>
-      <Counter />
-      <p class="mt-8">
-        Visit{" "}
-        <a href="https://solidjs.com" target="_blank" class="text-sky-600 hover:underline">
-          solidjs.com
-        </a>{" "}
-        to learn how to build Solid apps.
-      </p>
-      <p class="my-4">
-        <span>Home</span>
-        {" - "}
-        <A href="/about" class="text-sky-600 hover:underline">
-          About Page
-        </A>{" "}
-      </p>
-    </main>
+    <div class="min-h-screen bg-gray-950">
+      <header class="bg-gray-700 border-b border-gray-600 sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 py-3">
+          <h1 class="text-xl font-bold text-gray-100">LinkGator</h1>
+        </div>
+      </header>
+      
+      <main class="max-w-4xl mx-auto px-4 py-6">
+        <div class="space-y-4">
+          <For each={mockPosts}>
+            {(post) => <PostCard post={post} />}
+          </For>
+        </div>
+      </main>
+    </div>
   );
 }
