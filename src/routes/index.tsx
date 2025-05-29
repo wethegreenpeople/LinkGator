@@ -3,9 +3,9 @@ import { For } from "solid-js";
 import { Result } from "typescript-result";
 import Counter from "~/components/Counter";
 import { DatabaseTableNames } from "~/models/database-tables";
-import { MongoDBDatabasePlugin } from "~/plugins/mongodb/plugin";
 import { PluginManager } from "~/plugins/manager";
 import { DatabasePlugin } from "~/plugins/models/database-plugin";
+import { PluginType } from "~/plugins/models/plugin";
 import { supabaseService } from "~/plugins/supabase/supabase-server";
 
 const getFollowers = query(async () => {
@@ -13,7 +13,8 @@ const getFollowers = query(async () => {
 
   const pluginManager = PluginManager.getInstance();
   const followersResult = await pluginManager.executeForPlugins<DatabasePlugin, string[]>(
-    async (plugin) => await plugin.getFollowers()
+    async (plugin) => await plugin.getFollowers(),
+    PluginType.STORAGE
   );
   
   if (followersResult.isError()) {
