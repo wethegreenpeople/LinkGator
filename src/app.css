@@ -40,7 +40,6 @@
   --color-warning-container: oklch(0.2 0.1 60);
   --color-on-warning: oklch(0.98 0.02 60);
   --color-on-warning-container: oklch(0.95 0.05 60);
-
   /* Tailwind Color Overrides */
   --color-gray-50: oklch(0.98 0.02 240);
   --color-gray-100: oklch(0.95 0.02 240);
@@ -48,11 +47,10 @@
   --color-gray-300: oklch(0.8 0.02 240);
   --color-gray-400: oklch(0.65 0.02 240);
   --color-gray-500: oklch(0.5 0.02 240);
-  --color-gray-600: oklch(0.35 0.02 240);
-  --color-gray-700: oklch(0.22 0.02 240);
-  --color-gray-800: oklch(0.16 0.02 240);
-  --color-gray-900: oklch(0.12 0.02 240);
-  --color-gray-950: oklch(0.08 0.02 240);
+  --color-gray-600: oklch(0.4 0.02 240);
+  --color-gray-700: oklch(0.28 0.02 240);  --color-gray-800: oklch(0.2 0.02 240);
+  --color-gray-900: oklch(0.14 0.02 240);
+  --color-gray-950: oklch(0.09 0.02 240);
 
   /* Box Shadow */
   --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.12);
