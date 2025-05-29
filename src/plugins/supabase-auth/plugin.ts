@@ -1,22 +1,34 @@
 import { Result } from 'typescript-result';
 import { AuthPlugin } from '../models/auth-plugin';
-import { PluginType } from '../models/plugin';
-import { getLogger } from '@logtape/logtape';
+import { PluginType, BasePluginSettings } from '../models/plugin';
 import { createServerSupabase } from '~/plugins/supabase/supabase-server';
+import { AbstractBasePlugin } from '../models/base-plugin';
+import { fileURLToPath } from 'url'; // Added for ES Module path resolution
+import * as path from 'path'; // Added for path.dirname
+
+// Define specific settings for SupabaseAuth, extending base settings
+interface SupabaseAuthSettings extends BasePluginSettings {
+  // Add any supabase-specific settings here if needed in the future
+}
 
 /**
- * Supabase implementation of the AuthPlugin interface
+ * Supabase implementation of the AuthPlugin interface, extending AbstractBasePlugin.
  */
-export class SupabaseAuthPlugin implements AuthPlugin {
+export class SupabaseAuthPlugin extends AbstractBasePlugin<SupabaseAuthSettings> implements AuthPlugin {
   id = 'supabase-auth';
   name = 'Supabase Auth';
   version = '1.0.0';
   description = 'Supabase implementation for authentication';
   pluginType = PluginType.AUTH;
 
-  // Logger setup
-  logger = getLogger(["LinkGator"]);
-  
+  // constructor calls super to initialize settings and logger
+  constructor() {
+    // ES Module way to get current directory
+    const currentFilePath = fileURLToPath(import.meta.url);
+    const currentDir = path.dirname(currentFilePath);
+    super(currentDir, { enabled: false }); 
+  }
+
   async signUpUser(email: string, password: string): Promise<Result<{user: any}, Error>> {
     const serverSupabase = createServerSupabase();
     const signUpResponse = await serverSupabase.auth.signUp({ email, password });

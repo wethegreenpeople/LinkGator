@@ -1,11 +1,12 @@
-import { Result } from 'typescript-result';
-import { Plugin, PluginType } from './models/plugin';
-import { PluginManagerError, PluginManagerErrorType } from './models/plugin-manager';
 import { getLogger } from '../utils/logger';
 import { DatabasePlugin } from './models/database-plugin';
-import fs from 'fs';
-import path from 'path';
 import { fileURLToPath } from 'url';
+import { PluginManagerError, PluginManagerErrorType } from './models/plugin-manager';
+import { Plugin, PluginType } from './models/plugin';
+import { AbstractBasePlugin } from './models/base-plugin';
+import { Result } from 'typescript-result';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export class PluginManager {
   private static instance: PluginManager;
@@ -14,6 +15,7 @@ export class PluginManager {
   private logger = getLogger('LinkGator');
   
   private static currentFilePath = fileURLToPath(import.meta.url);
+  // Correct: currentDir should be the directory of manager.ts, which is src/plugins
   private static currentDir = path.dirname(PluginManager.currentFilePath);
 
   private constructor() {}
@@ -21,12 +23,7 @@ export class PluginManager {
   public static getInstance(): PluginManager {
     if (!PluginManager.instance) {
       PluginManager.instance = new PluginManager();
-      
-      // Always ensure plugins are initialized when getting an instance
-      // This is critical for server-side rendering where different contexts might exist
       if (!PluginManager.initialized) {
-        // Call initializePlugins asynchronously, but don't wait for it
-        // This is a compromise to keep the getInstance method synchronous
         PluginManager.initializePlugins().catch(error => {
           PluginManager.instance.logger.error`Failed to initialize plugins asynchronously: ${error}`;
         });
@@ -35,10 +32,6 @@ export class PluginManager {
     return PluginManager.instance;
   }
 
-  /**
-   * Initialize the plugin manager and register core plugins.
-   * This method ensures plugins are only registered once, even if called multiple times.
-   */
   public static async initializePlugins(force: boolean = false): Promise<void> {
     if (PluginManager.initialized && !force) {
       PluginManager.getInstance().logger.debug`Plugins already initialized, skipping registration`;
@@ -46,43 +39,47 @@ export class PluginManager {
     }
 
     const instance = PluginManager.getInstance();
-    instance.logger.info`Initializing plugins for the first time`;
+    instance.logger.info`Initializing plugins...`;
     
     try {
-      // Clear plugins map to avoid any stale state
       instance.plugins.clear();
-      
-      // Automatically discover and register plugins
       const discoveredPlugins = await PluginManager.discoverPlugins();
-      
       for (const plugin of discoveredPlugins) {
+        // The register method itself will perform the AbstractBasePlugin check
         instance.register(plugin);
       }
-      
       PluginManager.initialized = true;
-      instance.logger.info`Plugin initialization completed successfully with ${instance.plugins.size} plugins`;
+      instance.logger.info`Plugin initialization completed. Registered ${instance.plugins.size} plugins.`;
     } catch (error) {
       instance.logger.error`Failed to initialize plugins: ${error}`;
-      // Don't set initialized to true if there was an error
     }
   }
 
   public register<T extends Plugin>(plugin: T): void {
-    if (!plugin || !plugin.id) {
+    if (!plugin || !plugin.id || !plugin.name) {
+      this.logger.error`Attempted to register an invalid plugin object.`
       throw new PluginManagerError(
         PluginManagerErrorType.INVALID_PLUGIN,
-        'Invalid plugin provided'
+        'Invalid plugin data provided (id or name missing).'
       );
     }
 
-    // If plugin is already registered, log and return instead of throwing
+    if (!(plugin instanceof AbstractBasePlugin)) {
+      this.logger.error`Plugin ${plugin.id} (${plugin.name}) does not extend AbstractBasePlugin. Registration aborted.`;
+      throw new PluginManagerError(
+        PluginManagerErrorType.INVALID_PLUGIN, // Using existing error type
+        `Plugin ${plugin.id} (${plugin.name}) must extend AbstractBasePlugin.`
+      );
+    }
+
     if (this.plugins.has(plugin.id)) {
-      this.logger.warn`Plugin with ID ${plugin.id} is already registered, skipping`;
+      this.logger.warn`Plugin with ID ${plugin.id} (${plugin.name}) is already registered. Skipping.`;
       return;
     }
 
+    plugin.loadSettings(); 
     this.plugins.set(plugin.id, plugin);
-    this.logger.debug`Registered plugin: ${plugin.id}`;
+    this.logger.debug`Registered plugin: ${plugin.id} (${plugin.name})`;
   }
 
   /**
@@ -160,6 +157,11 @@ export class PluginManager {
     const errors: Error[] = [];
     
     for (const plugin of plugins) {
+      // Check isEnabled which is guaranteed by AbstractBasePlugin
+      if (!plugin.isEnabled()) { 
+        this.logger.debug`Plugin ${plugin.id} is disabled, skipping execution.`;
+        continue;
+      }
       try {
         const callbackResult = await callback(plugin);
         
@@ -210,69 +212,110 @@ export class PluginManager {
    */
   private static async discoverPlugins(): Promise<Plugin[]> {
     const instance = PluginManager.getInstance();
-    const plugins: Plugin[] = [];
+    const discovered: Plugin[] = [];
     
+    const pluginsRootPath = PluginManager.currentDir; 
+    instance.logger.debug`Starting plugin discovery in: ${pluginsRootPath}`;
+
     try {
-      if (!fs.existsSync(PluginManager.currentDir)) {
-        instance.logger.error`Plugins directory not found at ${PluginManager.currentDir}`;
-        return plugins;
+      if (!fs.existsSync(pluginsRootPath)) {
+        instance.logger.error`Plugins root directory not found at ${pluginsRootPath}`;
+        return discovered;
       }
       
-      // Get all subdirectories in the plugins folder
-      const items = fs.readdirSync(PluginManager.currentDir);
-      const dirs = items.filter(item => {
-        const itemPath = path.join(PluginManager.currentDir, item);
-        return fs.statSync(itemPath).isDirectory() && item !== 'models';
-      });
+      const items = fs.readdirSync(pluginsRootPath, { withFileTypes: true });
+      const pluginDirectories = items.filter(item => item.isDirectory() && item.name !== 'models');
       
-      instance.logger.debug`Found ${dirs.length} potential plugin directories`;
+      instance.logger.debug`Found ${pluginDirectories.length} potential plugin director(y/ies): ${pluginDirectories.map(d => d.name).join(', ')}`;
       
-      // Check each directory for a plugin.ts file
-      for (const dir of dirs) {
-        const pluginFilePath = path.join(PluginManager.currentDir, dir, 'plugin.ts');
-        
-        if (fs.existsSync(pluginFilePath)) {
+      for (const dirEnt of pluginDirectories) {
+        const pluginDirName = dirEnt.name;
+        const pluginDirPath = path.join(pluginsRootPath, pluginDirName);
+        const jsPluginFilePath = path.join(pluginDirPath, 'plugin.js');
+        const tsPluginFilePath = path.join(pluginDirPath, 'plugin.ts');
+
+        let actualPluginFilePath = '';
+        if (fs.existsSync(jsPluginFilePath)) {
+          actualPluginFilePath = jsPluginFilePath;
+        } else if (fs.existsSync(tsPluginFilePath)) {
+          actualPluginFilePath = tsPluginFilePath;
+        }
+
+        if (actualPluginFilePath) {
+          instance.logger.debug`Attempting to load plugin from: ${actualPluginFilePath}`;
           try {
-            // Convert file path to URL format for import()
-            const fileUrl = `file://${pluginFilePath.replace(/\\/g, '/')}`;
-            
-            // Dynamically import the plugin module using ESM dynamic import
+            const fileUrl = 'file:///' + actualPluginFilePath.replace(/\\/g, '/');
+            instance.logger.debug`Importing plugin module from ${fileUrl}`;
             const pluginModule = await import(fileUrl);
+            instance.logger.debug`Plugin module loaded from ${actualPluginFilePath}. Exports: ${Object.keys(pluginModule).join(', ')}`;
             
-            // Try to find a plugin class in the module
-            let pluginInstance: Plugin | null = null;
-            
-            // Check default export first
+            let instantiatedPlugin: any = null;
+
+            // Try default export first
             if (pluginModule.default && typeof pluginModule.default === 'function') {
-              pluginInstance = new pluginModule.default();
-            } 
-            // Check for named exports that might be plugin classes
-            else {
+              instance.logger.debug`Considering default export from ${actualPluginFilePath}`;
+              try {
+                const DefaultExportedClass = pluginModule.default;
+                const instanceAttempt = new DefaultExportedClass();
+                // Check if it has an ID, a basic indicator of a plugin structure
+                if (instanceAttempt && typeof instanceAttempt.id === 'string') {
+                  instantiatedPlugin = instanceAttempt; 
+                  instance.logger.debug`Default export instantiated, has ID. Will verify type.`;
+                }
+              } catch (e: any) {
+                instance.logger.debug`Default export from ${actualPluginFilePath} could not be instantiated or is not a class: ${e.message}`;
+              }
+            }
+            
+            // If default export didn't yield a plugin, or to find a more specific one, check named exports
+            if (!instantiatedPlugin || !(instantiatedPlugin instanceof AbstractBasePlugin)) {
               for (const exportName in pluginModule) {
-                if (exportName.includes('Plugin') && typeof pluginModule[exportName] === 'function') {
-                  pluginInstance = new pluginModule[exportName]();
-                  break;
+                if (exportName === 'default') continue;
+
+                if (typeof pluginModule[exportName] === 'function') {
+                  instance.logger.debug`Considering named export '${exportName}' from ${actualPluginFilePath}`;
+                  try {
+                    const ExportedClass = pluginModule[exportName];
+                    const instanceAttempt = new ExportedClass();
+                    // Check if it has an ID
+                    if (instanceAttempt && typeof instanceAttempt.id === 'string') {
+                       // If this instance is an AbstractBasePlugin, it's a strong candidate
+                       if (instanceAttempt instanceof AbstractBasePlugin) {
+                           instantiatedPlugin = instanceAttempt;
+                           instance.logger.info`Found and instantiated AbstractBasePlugin compatible named export '${exportName}'.`;
+                           break; // Found a confirmed plugin
+                       } else if (!instantiatedPlugin) {
+                           // If no plugin found yet, keep this as a candidate
+                           instantiatedPlugin = instanceAttempt;
+                           instance.logger.debug`Named export '${exportName}' instantiated, has ID. Will verify type.`;
+                       }
+                    }
+                  } catch (e: any) {
+                    instance.logger.debug`Named export '${exportName}' from ${actualPluginFilePath} could not be instantiated or is not a class: ${e.message}`;
+                  }
                 }
               }
             }
             
-            if (pluginInstance && typeof pluginInstance.id === 'string') {
-              instance.logger.info`Discovered plugin: ${pluginInstance.id} from ${dir}/plugin.ts`;
-              plugins.push(pluginInstance);
+            // Final check for the instantiated plugin
+            if (instantiatedPlugin instanceof AbstractBasePlugin) {
+              discovered.push(instantiatedPlugin as Plugin);
+              instance.logger.info`Successfully discovered and validated plugin: ${(instantiatedPlugin as Plugin).id} from ${pluginDirName}`;
+            } else if (instantiatedPlugin) {
+              instance.logger.warn`Instantiated class from ${pluginDirName} (${instantiatedPlugin.constructor.name || 'UnknownClass'}) does not extend AbstractBasePlugin. Skipping.`;
             } else {
-              instance.logger.warn`No valid plugin found in ${dir}/plugin.ts`;
+              instance.logger.warn`No suitable plugin class found or instantiated in ${actualPluginFilePath}.`;
             }
           } catch (error) {
-            instance.logger.error`Failed to load plugin from ${dir}/plugin.ts: ${error}`;
+            instance.logger.error`Error processing plugin file ${actualPluginFilePath}: ${error}`;
           }
         } else {
-          instance.logger.debug`No plugin.ts file found in ${dir}`;
+          instance.logger.debug`No plugin.js or plugin.ts found in directory ${pluginDirPath}`;
         }
       }
     } catch (error) {
-      instance.logger.error`Error discovering plugins: ${error}`;
+      instance.logger.error`Error during plugin discovery process: ${error}`;
     }
-    
-    return plugins;
+    return discovered; // Ensure return path is always hit
   }
 }
