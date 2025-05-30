@@ -1,5 +1,5 @@
 import { Database } from '~/models/supabase';
-import { Plugin, PluginType } from '../models/plugin';
+import { PluginType, Plugin } from './plugin';
 import { Result } from 'typescript-result';
 
 export interface DatabasePlugin extends Plugin {

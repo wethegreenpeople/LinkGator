@@ -1,7 +1,7 @@
 import { For, Show } from "solid-js";
 import { createAsync, query, revalidate } from "@solidjs/router";
 import { PluginManager } from "~/plugins/manager";
-import { AbstractBasePlugin } from "~/plugins/models/base-plugin";
+import { AbstractBasePlugin } from "~/models/plugin_models/base-plugin";
 
 interface PluginDisplayInfo {
   id: string;

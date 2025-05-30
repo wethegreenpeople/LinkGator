@@ -1,7 +1,7 @@
 import { Result } from 'typescript-result';
-import { ThemePlugin, ThemeVariables } from '../models/theme-plugin';
-import { PluginType, BasePluginSettings } from '../models/plugin';
-import { AbstractBasePlugin } from '../models/base-plugin';
+import { ThemePlugin, ThemeVariables } from '../../models/plugin_models/theme-plugin';
+import { PluginType, BasePluginSettings } from '../../models/plugin_models/plugin';
+import { AbstractBasePlugin } from '../../models/plugin_models/base-plugin';
 import { fileURLToPath } from 'url';
 import * as path from 'path';
 

@@ -1,6 +1,6 @@
 import { PluginManager } from '../plugins/manager';
-import { ThemePlugin } from '../plugins/models/theme-plugin';
-import { PluginType } from '../plugins/models/plugin';
+import { ThemePlugin } from '../models/plugin_models/theme-plugin';
+import { PluginType } from '../models/plugin_models/plugin';
 import { Result } from 'typescript-result';
 import { getLogger } from '@logtape/logtape';
 

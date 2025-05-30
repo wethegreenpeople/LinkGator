@@ -11,9 +11,9 @@ import { createServerSupabaseClient, supabaseService } from "~/plugins/supabase/
 import { DatabaseTableNames } from "~/models/database-tables";
 import '@dotenvx/dotenvx/config'
 import { PluginManager } from "~/plugins/manager";
-import { DatabasePlugin } from "~/plugins/models/database-plugin";
 import { Result } from "typescript-result";
-import { PluginType } from "~/plugins/models/plugin";
+import { PluginType } from "~/models/plugin_models/plugin";
+import { DatabasePlugin } from "~/models/plugin_models/database-plugin";
 
 const logger = getLogger(["LinkGator"]);
 const pluginManager = PluginManager.getInstance();

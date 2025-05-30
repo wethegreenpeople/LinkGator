@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { PluginManager } from "~/plugins/manager";
-import { AbstractBasePlugin } from "~/plugins/models/base-plugin";
-import { PluginType, BasePluginSettings, Plugin } from "~/plugins/models/plugin";
-import { PluginManagerError, PluginManagerErrorType } from "~/plugins/models/plugin-manager";
+import { AbstractBasePlugin } from "~/models/plugin_models/base-plugin";
+import { PluginType, BasePluginSettings, Plugin } from "~/models/plugin_models/plugin";
+import { PluginManagerError, PluginManagerErrorType } from "~/models/plugin_models/plugin-manager";
 import { Result } from "typescript-result";
 import * as fs from "fs";
 import * as path from "path";

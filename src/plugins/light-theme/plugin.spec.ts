@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { LightThemePlugin } from "~/plugins/light-theme/plugin";
-import { PluginType } from "~/plugins/models/plugin";
+import { PluginType } from "~/models/plugin_models/plugin";
 import * as path from "path";
 
 describe("LightThemePlugin", () => {

@@ -1,5 +1,6 @@
-import { Plugin, PluginType } from './plugin';
+
 import { Result } from 'typescript-result';
+import { PluginType, Plugin } from './plugin';
 
 export interface AuthPlugin extends Plugin {
     // Required auth plugin type

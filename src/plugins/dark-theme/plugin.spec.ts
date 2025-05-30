@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { DarkThemePlugin } from './plugin';
-import { PluginType } from '../models/plugin';
+import { PluginType } from '../../models/plugin_models/plugin';
 
 // Mock DOM methods
 const mockSetProperty = vi.fn();

@@ -1,8 +1,8 @@
 import { Result } from 'typescript-result';
-import { AuthPlugin } from '../models/auth-plugin';
-import { PluginType, BasePluginSettings } from '../models/plugin';
+import { AuthPlugin } from '../../models/plugin_models/auth-plugin';
+import { PluginType, BasePluginSettings } from '../../models/plugin_models/plugin';
 import { createServerSupabase } from '~/plugins/supabase/supabase-server';
-import { AbstractBasePlugin } from '../models/base-plugin';
+import { AbstractBasePlugin } from '../../models/plugin_models/base-plugin';
 import { fileURLToPath } from 'url'; // Added for ES Module path resolution
 import * as path from 'path'; // Added for path.dirname
 

@@ -1,8 +1,8 @@
 "use server"
 import { redirect } from "@solidjs/router";
 import { PluginManager } from "~/plugins/manager";
-import { AuthPlugin } from "~/plugins/models/auth-plugin";
-import { PluginType } from "~/plugins/models/plugin";
+import { AuthPlugin } from "~/models/plugin_models/auth-plugin";
+import { PluginType } from "~/models/plugin_models/plugin";
 
 export async function GET() {
     const pluginManager = PluginManager.getInstance();

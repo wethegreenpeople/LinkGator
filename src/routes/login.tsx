@@ -7,9 +7,9 @@ import { createServerSupabase, supabaseService } from "~/plugins/supabase/supaba
 import { supabaseClient } from "~/plugins/supabase/supabase-client";
 import { AuthError, Session } from "@supabase/supabase-js";
 import { PluginManager } from "~/plugins/manager";
-import { DatabasePlugin } from "~/plugins/models/database-plugin";
-import { AuthPlugin } from "~/plugins/models/auth-plugin";
-import { PluginType } from "~/plugins/models/plugin";
+import { DatabasePlugin } from "~/models/plugin_models/database-plugin";
+import { AuthPlugin } from "~/models/plugin_models/auth-plugin";
+import { PluginType } from "~/models/plugin_models/plugin";
 
 const logger = getLogger(["LinkGator"]);
 

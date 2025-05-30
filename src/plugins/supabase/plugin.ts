@@ -1,11 +1,11 @@
 import { Database } from '~/models/supabase';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { DatabasePlugin } from '../models/database-plugin';
+import { DatabasePlugin } from '../../models/plugin_models/database-plugin';
 import { Result } from 'typescript-result';
 import { supabaseService } from '~/plugins/supabase/supabase-server';
 import { DatabaseTableNames } from '~/models/database-tables';
-import { PluginType, BasePluginSettings } from '../models/plugin'; // Added BasePluginSettings
-import { AbstractBasePlugin } from '../models/base-plugin'; // Added AbstractBasePlugin
+import { PluginType, BasePluginSettings } from '../../models/plugin_models/plugin'; // Added BasePluginSettings
+import { AbstractBasePlugin } from '../../models/plugin_models/base-plugin'; // Added AbstractBasePlugin
 import { getLogger } from '@logtape/logtape';
 import { fileURLToPath } from 'url'; // Added for ES Module path resolution
 import * as path from 'path'; // Added for path.dirname

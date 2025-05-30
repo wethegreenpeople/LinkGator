@@ -1,9 +1,9 @@
 import { getLogger } from '../utils/logger';
-import { DatabasePlugin } from './models/database-plugin';
+import { DatabasePlugin } from '../models/plugin_models/database-plugin';
 import { fileURLToPath } from 'url';
-import { PluginManagerError, PluginManagerErrorType } from './models/plugin-manager';
-import { Plugin, PluginType } from './models/plugin';
-import { AbstractBasePlugin } from './models/base-plugin';
+import { PluginManagerError, PluginManagerErrorType } from '../models/plugin_models/plugin-manager';
+import { Plugin, PluginType } from '../models/plugin_models/plugin';
+import { AbstractBasePlugin } from '../models/plugin_models/base-plugin';
 import { Result } from 'typescript-result';
 import * as fs from 'fs';
 import * as path from 'path';
