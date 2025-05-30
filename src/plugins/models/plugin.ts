@@ -6,7 +6,8 @@
 export enum PluginType {
   AUTH = 'auth',
   DATABASE = 'database',
-  STORAGE = 'storage'
+  STORAGE = 'storage',
+  THEME = 'theme'
 }
 
 // Added: Base settings interface

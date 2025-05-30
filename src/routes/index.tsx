@@ -5,7 +5,7 @@ import { mockPosts } from "~/lib/mockData";
 
 export default function Home() {
   return (
-    <div class="min-h-screen bg-gray-950">
+    <div class="min-h-screen bg-background">
       <main class="max-w-4xl mx-auto px-4 py-6">
         <div class="space-y-4">
           <For each={mockPosts}>

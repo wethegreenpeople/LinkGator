@@ -12,6 +12,7 @@ export async function POST({ params, request }: { params: { pluginId: string }, 
     }
 
     const pluginManager = PluginManager.getInstance();
+    await PluginManager.initializePlugins(); // Ensure plugins are initialized
     pluginManager.updatePluginSettings(params.pluginId, settingKey, value);
     
     return json({ success: true });
