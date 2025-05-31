@@ -1,18 +1,6 @@
 import { Component } from "solid-js";
 import { formatDistanceToNow } from "date-fns";
-
-export interface Post {
-  id: string;
-  title: string;
-  body?: string;
-  image?: string;
-  author: string;
-  community: string;
-  createdAt: Date;
-  upvotes: number;
-  downvotes: number;
-  comments: number;
-}
+import { Post } from "~/models/post";
 
 interface PostCardProps {
   post: Post;
