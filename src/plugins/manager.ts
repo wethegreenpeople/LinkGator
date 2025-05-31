@@ -15,7 +15,6 @@ export class PluginManager {
   private logger = getLogger('LinkGator');
   
   private static currentFilePath = fileURLToPath(import.meta.url);
-  // Correct: currentDir should be the directory of manager.ts, which is src/plugins
   private static currentDir = path.dirname(PluginManager.currentFilePath);
 
   private constructor() {}
@@ -30,9 +29,7 @@ export class PluginManager {
       }
     }
     return PluginManager.instance;
-  }
-
-  public static async initializePlugins(force: boolean = false): Promise<void> {
+  }  public static async initializePlugins(force: boolean = false): Promise<void> {
     if (PluginManager.initialized && !force) {
       PluginManager.getInstance().logger.debug`Plugins already initialized, skipping registration`;
       return;
@@ -45,9 +42,9 @@ export class PluginManager {
       instance.plugins.clear();
       const discoveredPlugins = await PluginManager.discoverPlugins();
       for (const plugin of discoveredPlugins) {
-        // The register method itself will perform the AbstractBasePlugin check
         instance.register(plugin);
       }
+      
       PluginManager.initialized = true;
       instance.logger.info`Plugin initialization completed. Registered ${instance.plugins.size} plugins.`;
     } catch (error) {
@@ -144,8 +141,7 @@ export class PluginManager {
 
   /**
    * Update plugin settings
-   */
-  public updatePluginSettings(pluginId: string, settingKey: string, value: any): void {
+   */  public updatePluginSettings(pluginId: string, settingKey: string, value: any): void {
     const plugin = this.getById<AbstractBasePlugin<any>>(pluginId);
     
     if (!(plugin instanceof AbstractBasePlugin)) {
@@ -158,6 +154,10 @@ export class PluginManager {
     plugin.settings[settingKey] = value;
     plugin.saveSettings();
     this.logger.debug`Updated setting ${settingKey} for plugin ${pluginId}`;
+    
+    PluginManager.initializePlugins(true).catch(error => {
+      this.logger.error`Failed to re-initialize plugins after settings update: ${error}`;
+    });
   }
 
   /**
@@ -333,10 +333,9 @@ export class PluginManager {
         } else {
           instance.logger.debug`No plugin.js or plugin.ts found in directory ${pluginDirPath}`;
         }
-      }
-    } catch (error) {
+      }    } catch (error) {
       instance.logger.error`Error during plugin discovery process: ${error}`;
     }
-    return discovered; // Ensure return path is always hit
+    return discovered;
   }
 }

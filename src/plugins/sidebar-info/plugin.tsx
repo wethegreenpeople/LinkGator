@@ -17,10 +17,10 @@ export class SidebarInfo extends AbstractBasePlugin<SidebarInfoSettings> impleme
     name: string = 'Side Bar Info';
     version: string = '1.0.0';
     description: string = 'Display some simple information in the sidebar';
-    pluginType = PluginType.CLIENT as const;    constructor() {
+    pluginType = PluginType.CLIENT as const; constructor() {
         const currentFilePath = fileURLToPath(import.meta.url);
         const currentDir = path.dirname(currentFilePath);
-        super(currentDir, { 
+        super(currentDir, {
             enabled: true,
             header: "",
             body: ""
@@ -28,8 +28,9 @@ export class SidebarInfo extends AbstractBasePlugin<SidebarInfoSettings> impleme
     }
     mainFeed?(posts: Post[]): JSX.Element | null {
         return null;
-    }    
-      homeSidebar?(): JSX.Element | null {
+    }
+    
+    homeSidebar?(): JSX.Element | null {
         if (!this.settings.enabled || (!this.settings.header && !this.settings.body)) {
             return null;
         }
