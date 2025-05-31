@@ -37,14 +37,6 @@ export default function Home() {
                   {(htmlString) => <div innerHTML={htmlString} />}
                 </For>
               </Suspense>
-              
-              {/* Static sidebar content */}
-              <div class="bg-surface border border-outline-variant rounded-lg p-4">
-                <h4 class="font-medium text-on-surface mb-3">About LinkGator</h4>
-                <p class="text-sm text-on-surface-variant">
-                  A modern link aggregator built with SolidJS and a powerful plugin system.
-                </p>
-              </div>
             </div>
           </aside>
         </div>
