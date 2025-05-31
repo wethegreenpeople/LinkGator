@@ -251,12 +251,15 @@ export class PluginManager {
         const pluginDirPath = path.join(pluginsRootPath, pluginDirName);
         const jsPluginFilePath = path.join(pluginDirPath, 'plugin.js');
         const tsPluginFilePath = path.join(pluginDirPath, 'plugin.ts');
+        const tsxPluginFilePath = path.join(pluginDirPath, 'plugin.tsx');
 
         let actualPluginFilePath = '';
         if (fs.existsSync(jsPluginFilePath)) {
           actualPluginFilePath = jsPluginFilePath;
         } else if (fs.existsSync(tsPluginFilePath)) {
           actualPluginFilePath = tsPluginFilePath;
+        } else if (fs.existsSync(tsxPluginFilePath)) {
+          actualPluginFilePath = tsxPluginFilePath;
         }
 
         if (actualPluginFilePath) {
