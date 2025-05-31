@@ -1,4 +1,5 @@
 import { For, Show } from "solid-js";
+import { createStore } from "solid-js/store";
 import { createAsync, query, revalidate } from "@solidjs/router";
 import { PluginManager } from "~/plugins/manager";
 import { AbstractBasePlugin } from "~/models/plugin_models/base-plugin";
@@ -14,28 +15,31 @@ interface PluginDisplayInfo {
 
 const getPluginData = query(async () => {
   "use server";
-  const pluginManager = PluginManager.getInstance(); // No await needed for getInstance itself, initialization is handled within
-  await PluginManager.initializePlugins(); // Ensure plugins are discovered and loaded, call explicitly if needed.
-  const plugins = pluginManager.getAll(); // Use getAll() on the instance
+  // Reset the PluginManager singleton to ensure fresh state
+  (PluginManager as any).instance = undefined;
+  (PluginManager as any).initialized = false;
+  
+  const pluginManager = PluginManager.getInstance();
+  await PluginManager.initializePlugins(true);
+  
+  // Small delay to ensure all async operations complete
+  await new Promise(resolve => setTimeout(resolve, 10));
+  
+  const plugins = pluginManager.getAll();
 
   const pluginInfo: PluginDisplayInfo[] = [];
 
   for (const plugin of plugins) {
     if (plugin instanceof AbstractBasePlugin) {
       try {
-        // Ensure settings are loaded if not already. loadSettings is synchronous in AbstractBasePlugin.
-        // if (!plugin.settings || Object.keys(plugin.settings).length === 0) {
-        //   plugin.loadSettings(); // loadSettings is sync
-        // }
-        // Settings should be loaded during registration or by accessing plugin.settings which calls loadSettings if needed.
-        // To be safe, we can call it, or rely on the getter to do its job.
-        // Let's ensure it's called if not present, but it's synchronous.
-        if (!plugin.settings) plugin.loadSettings();        pluginInfo.push({
+        // Force reload settings to ensure fresh data
+        plugin.loadSettings(); 
+        pluginInfo.push({
           id: plugin.id,
           name: plugin.name,
           version: plugin.version,
           description: plugin.description,
-          settings: plugin.settings || { enabled: plugin.isEnabled() }, // Fallback for settings
+          settings: plugin.settings || { enabled: plugin.isEnabled() },
         });
       } catch (error: any) {
         console.error(`Error processing plugin ${plugin.name}:`, error);        pluginInfo.push({
@@ -43,7 +47,7 @@ const getPluginData = query(async () => {
           name: plugin.name,
           version: plugin.version,
           description: plugin.description,
-          settings: { enabled: false }, // Default settings on error
+          settings: { enabled: false },
           error: error.message || "Failed to load settings",
         });
       }
@@ -58,6 +62,7 @@ export const route = {
 
 export default function PluginManagerPage() {
   const plugins = createAsync(() => getPluginData());
+  const [pendingChanges, setPendingChanges] = createStore<Record<string, Record<string, any>>>({});
 
   const updateSetting = async (pluginId: string, settingKey: string, value: any) => {
     try {
@@ -77,7 +82,35 @@ export default function PluginManagerPage() {
     } catch (error) {
       console.error('Error updating setting:', error);
     }
-  };  return (
+  };
+  const updatePendingChange = (pluginId: string, settingKey: string, value: any) => {
+    setPendingChanges(pluginId, (prev) => ({
+      ...prev,
+      [settingKey]: value
+    }));
+  };
+
+  const savePendingChanges = async (pluginId: string) => {
+    const changes = pendingChanges[pluginId];
+    if (!changes) return;
+
+    try {
+      for (const [settingKey, value] of Object.entries(changes)) {
+        await updateSetting(pluginId, settingKey, value);
+      }
+      setPendingChanges(pluginId, {});
+    } catch (error) {
+      console.error('Error saving changes:', error);
+    }
+  };
+
+  const hasPendingChanges = (pluginId: string) => {
+    return pendingChanges[pluginId] && Object.keys(pendingChanges[pluginId]).length > 0;
+  };
+
+  const getDisplayValue = (pluginId: string, settingKey: string, originalValue: any) => {
+    return pendingChanges[pluginId]?.[settingKey] ?? originalValue;
+  };return (
     <div class="min-h-screen bg-background text-on-background">
       <div class="container mx-auto p-6">
         <h1 class="text-3xl font-medium mb-8 text-on-background">Plugin Management</h1>
@@ -108,9 +141,18 @@ export default function PluginManagerPage() {
                     </p>
                   </div>
                 </Show>
-                
-                <div class="border-t border-outline-variant pt-4">
-                  <h3 class="text-sm font-medium text-on-surface-variant uppercase tracking-wide mb-3">Settings</h3>
+                  <div class="border-t border-outline-variant pt-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-on-surface-variant uppercase tracking-wide">Settings</h3>
+                    <Show when={hasPendingChanges(plugin.id)}>
+                      <button
+                        onClick={() => savePendingChanges(plugin.id)}
+                        class="px-3 py-1 bg-primary text-on-primary text-xs rounded-md hover:bg-primary/90 transition-colors"
+                      >
+                        Save Changes
+                      </button>
+                    </Show>
+                  </div>
                   <Show when={Object.keys(plugin.settings).length > 0} fallback={
                     <p class="text-on-surface-variant text-sm italic">No settings available</p>
                   }>
@@ -119,13 +161,22 @@ export default function PluginManagerPage() {
                         <div class="flex items-center justify-between py-2">
                           <label class="text-on-surface text-sm font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
                           <Show when={typeof value === 'boolean'} fallback={
-                            <span class="text-on-surface-variant text-sm bg-surface-variant px-2 py-1 rounded">{String(value)}</span>
-                          }>
-                            <label class="relative inline-flex items-center cursor-pointer">
+                            <Show when={typeof value === 'string'} fallback={
+                              <span class="text-on-surface-variant text-sm bg-surface-variant px-2 py-1 rounded">{String(value)}</span>
+                            }>
+                              <input
+                                type="text"
+                                value={getDisplayValue(plugin.id, key, value)}
+                                onInput={(e) => updatePendingChange(plugin.id, key, e.target.value)}
+                                class="bg-surface-variant text-on-surface text-sm px-2 py-1 rounded border border-outline-variant focus:border-primary focus:outline-none min-w-0 flex-shrink"
+                                style="min-width: 100px; max-width: 200px;"
+                              />
+                            </Show>
+                          }>                            <label class="relative inline-flex items-center cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={value as boolean}
-                                onChange={(e) => updateSetting(plugin.id, key, e.target.checked)}
+                                checked={getDisplayValue(plugin.id, key, value) as boolean}
+                                onChange={(e) => updatePendingChange(plugin.id, key, e.target.checked)}
                                 class="sr-only peer"
                               />
                               <div class="w-11 h-6 bg-surface-variant peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
