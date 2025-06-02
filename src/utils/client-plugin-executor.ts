@@ -13,6 +13,7 @@ export interface PluginContent {
 export class ClientPluginExecutor {
   private static instance: ClientPluginExecutor;
   private pluginManager: PluginManager;
+  private lastInitialization: number = 0;
 
   private constructor() {
     this.pluginManager = PluginManager.getInstance();
@@ -24,8 +25,22 @@ export class ClientPluginExecutor {
     }
     return ClientPluginExecutor.instance;
   }
+
+  /**
+   * Invalidate the cache to force fresh plugin data on next execution
+   */
+  public invalidateCache(): void {
+    this.lastInitialization = 0;
+  }
+  
   public async executeAllPlugins(posts: Post[]): Promise<PluginContent> {
-    await PluginManager.initializePlugins();
+    // Check if we need to refresh plugin data
+    const currentTime = Date.now();
+    if (currentTime - this.lastInitialization > 1000) { // Cache for 1 second
+      await PluginManager.initializePlugins();
+      this.pluginManager.reloadAllPluginSettings();
+      this.lastInitialization = currentTime;
+    }
     
     const clientPlugins = this.pluginManager.getByType<ClientPlugin>(PluginType.CLIENT)
       .filter(plugin => plugin.isEnabled());

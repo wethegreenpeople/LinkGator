@@ -141,7 +141,8 @@ export class PluginManager {
 
   /**
    * Update plugin settings
-   */  public updatePluginSettings(pluginId: string, settingKey: string, value: any): void {
+   */
+  public updatePluginSettings(pluginId: string, settingKey: string, value: any): void {
     const plugin = this.getById<AbstractBasePlugin<any>>(pluginId);
     
     if (!(plugin instanceof AbstractBasePlugin)) {
@@ -155,9 +156,45 @@ export class PluginManager {
     plugin.saveSettings();
     this.logger.debug`Updated setting ${settingKey} for plugin ${pluginId}`;
     
-    PluginManager.initializePlugins(true).catch(error => {
-      this.logger.error`Failed to re-initialize plugins after settings update: ${error}`;
-    });
+    // Don't re-initialize all plugins, just reload this plugin's settings
+    this.reloadPluginSettings(pluginId);
+  }
+
+  /**
+   * Reload settings for a specific plugin without full re-initialization
+   */
+  public reloadPluginSettings(pluginId: string): void {
+    try {
+      const plugin = this.getById<AbstractBasePlugin<any>>(pluginId);
+      
+      if (!(plugin instanceof AbstractBasePlugin)) {
+        throw new PluginManagerError(
+          PluginManagerErrorType.INVALID_PLUGIN,
+          `Plugin ${pluginId} is not an AbstractBasePlugin`
+        );
+      }
+
+      plugin.loadSettings();
+      this.logger.debug`Reloaded settings for plugin ${pluginId}`;
+    } catch (error) {
+      this.logger.error`Failed to reload settings for plugin ${pluginId}: ${error}`;
+    }
+  }
+
+  /**
+   * Reload settings for all plugins
+   */
+  public reloadAllPluginSettings(): void {
+    for (const plugin of this.plugins.values()) {
+      if (plugin instanceof AbstractBasePlugin) {
+        try {
+          plugin.loadSettings();
+          this.logger.debug`Reloaded settings for plugin ${plugin.id}`;
+        } catch (error) {
+          this.logger.error`Failed to reload settings for plugin ${plugin.id}: ${error}`;
+        }
+      }
+    }
   }
 
   /**

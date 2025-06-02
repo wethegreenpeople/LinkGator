@@ -78,7 +78,9 @@ export default function PluginManagerPage() {
         throw new Error('Failed to update setting');
       }
       
+      // Revalidate both the plugin data and the main plugin content
       revalidate(getPluginData.key);
+      revalidate("plugin-content");
     } catch (error) {
       console.error('Error updating setting:', error);
     }

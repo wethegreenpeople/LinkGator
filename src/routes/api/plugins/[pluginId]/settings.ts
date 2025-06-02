@@ -1,5 +1,6 @@
-import { json } from "@solidjs/router";
+import { json, revalidate } from "@solidjs/router";
 import { PluginManager } from "~/plugins/manager";
+import { ClientPluginExecutor } from "~/utils/client-plugin-executor";
 
 export async function POST({ params, request }: { params: { pluginId: string }, request: Request }) {
   "use server";
@@ -14,7 +15,12 @@ export async function POST({ params, request }: { params: { pluginId: string }, 
     const pluginManager = PluginManager.getInstance();
     await PluginManager.initializePlugins(); // Ensure plugins are initialized
     pluginManager.updatePluginSettings(params.pluginId, settingKey, value);
-    await PluginManager.initializePlugins(true);
+    
+    // Invalidate the ClientPluginExecutor cache to ensure fresh data
+    ClientPluginExecutor.getInstance().invalidateCache();
+    
+    // Revalidate the plugin content query to refresh the UI
+    revalidate("plugin-content");
     
     return json({ success: true });
   } catch (error: any) {
