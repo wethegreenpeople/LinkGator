@@ -1,6 +1,7 @@
 import { Database } from '~/models/supabase';
 import { PluginType, Plugin } from './plugin';
 import { Result } from 'typescript-result';
+import { Post } from '../post';
 
 export interface DatabasePlugin extends Plugin {
     // Required database plugin type
@@ -14,4 +15,9 @@ export interface DatabasePlugin extends Plugin {
 
     createUserProfile(authId: string, actorUri: string): Promise<Result<any, Error>>;
     createUserKeys(authId: string, actorUri: string, publicKey: string, privateKey: string): Promise<Result<any, Error>>;
+    
+    // Posts methods
+    getAllPosts(): Promise<Result<Post[], Error>>;
+    getPostById(id: string): Promise<Result<Post, Error>>;
+    createPost(post: any): Promise<Result<Post, Error>>;
 }

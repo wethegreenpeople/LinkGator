@@ -142,4 +142,57 @@ export class SupabaseDatabasePlugin extends AbstractBasePlugin<SupabaseDatabaseS
       return Result.error(error instanceof Error ? error : new Error(String(error)));
     }
   }
+
+  async getAllPosts(): Promise<Result<any[], Error>> {
+    try {
+      const response = await supabaseService.from(DatabaseTableNames.Posts)
+        .select('*, communities(name)')
+        .order('created_at', { ascending: false });
+      
+      if (response.error) {
+        this.logger.error`Error fetching posts: ${response.error}`;
+        return Result.error(new Error(`Couldn't fetch posts: ${response.error.message}`));
+      }
+      
+      return Result.ok(response.data || []);
+    } catch (error) {
+      this.logger.error`Unexpected error fetching posts: ${error}`;
+      return Result.error(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  async getPostById(id: string): Promise<Result<any, Error>> {
+    try {
+      const response = await supabaseService.from(DatabaseTableNames.Posts)
+        .select('*, communities(name)')
+        .eq('id', id)
+        .single();
+      
+      if (response.error) {
+        this.logger.error`Error fetching post: ${response.error}`;
+        return Result.error(new Error(`Couldn't fetch post: ${response.error.message}`));
+      }
+      
+      return Result.ok(response.data);
+    } catch (error) {
+      this.logger.error`Unexpected error fetching post: ${error}`;
+      return Result.error(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  async createPost(post: any): Promise<Result<any, Error>> {
+    try {
+      const response = await supabaseService.from(DatabaseTableNames.Posts).insert(post);
+      
+      if (response.error) {
+        this.logger.error`Error creating post: ${response.error}`;
+        return Result.error(new Error(`Couldn't create post: ${response.error.message}`));
+      }
+      
+      return Result.ok(response.data);
+    } catch (error) {
+      this.logger.error`Unexpected error creating post: ${error}`;
+      return Result.error(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
 }
