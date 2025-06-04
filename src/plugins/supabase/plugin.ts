@@ -49,6 +49,19 @@ export class SupabaseDatabasePlugin extends AbstractBasePlugin<SupabaseDatabaseS
     return Result.ok(response.data[0]);
   }
 
+  async getProfileFromAuthId(authId: string): Promise<Result<any, Error>> {
+    const response = await supabaseService.from(DatabaseTableNames.Profiles)
+      .select()
+      .eq('auth_id', authId)
+      .limit(1);
+
+    if (response.error) {
+      return Result.error(new Error(`Couldn't retrieve profile from given auth ID: ${authId}`));
+    }
+
+    return Result.ok(response.data[0]);
+  }
+
   async getKeysForActor(actorUri: string): Promise<Result<{private_key: string, public_key: string}, Error>> {
     const response = await supabaseService.from(DatabaseTableNames.Keys)
       .select()
@@ -192,6 +205,24 @@ export class SupabaseDatabasePlugin extends AbstractBasePlugin<SupabaseDatabaseS
       return Result.ok(response.data);
     } catch (error) {
       this.logger.error`Unexpected error creating post: ${error}`;
+      return Result.error(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  async getAllCommunities(): Promise<Result<any[], Error>> {
+    try {
+      const response = await supabaseService.from(DatabaseTableNames.Communities)
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (response.error) {
+        this.logger.error`Error fetching communities: ${response.error}`;
+        return Result.error(new Error(`Couldn't fetch communities: ${response.error.message}`));
+      }
+      
+      return Result.ok(response.data || []);
+    } catch (error) {
+      this.logger.error`Unexpected error fetching communities: ${error}`;
       return Result.error(error instanceof Error ? error : new Error(String(error)));
     }
   }

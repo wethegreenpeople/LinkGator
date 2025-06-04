@@ -8,6 +8,7 @@ export interface DatabasePlugin extends Plugin {
     pluginType: PluginType.DATABASE | (PluginType & {});
 
     getProfileFromActorUri(actorUri: string): Promise<Result<any, Error>>;
+    getProfileFromAuthId(authId: string): Promise<Result<any, Error>>;
     getKeysForActor(actorUri: string): Promise<Result<{private_key: string, public_key: string}, Error>>;
     addFollower(followerActorUri: string, actorUri: string): Promise<Result<any, Error>>;
     removeFollower(followerActorUri: string): Promise<Result<any, Error>>;
@@ -20,4 +21,7 @@ export interface DatabasePlugin extends Plugin {
     getAllPosts(): Promise<Result<Post[], Error>>;
     getPostById(id: string): Promise<Result<Post, Error>>;
     createPost(post: any): Promise<Result<Post, Error>>;
+    
+    // Communities methods
+    getAllCommunities(): Promise<Result<any[], Error>>;
 }

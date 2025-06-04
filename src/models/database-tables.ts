@@ -3,5 +3,6 @@ export enum DatabaseTableNames {
     Followers = "followers",
     Keys = "keys",
     Profiles = "profiles",
-    Posts = "posts"
+    Posts = "posts",
+    Communities = "communities"
 }
