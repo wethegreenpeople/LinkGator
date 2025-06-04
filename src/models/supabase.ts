@@ -34,6 +34,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      communities: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       fedify_kv_v2: {
         Row: {
           created: string | null
@@ -100,24 +118,65 @@ export type Database = {
         }
         Relationships: []
       }
+      posts: {
+        Row: {
+          actor_id: string
+          community_id: string
+          content: Json | null
+          created_at: string
+          id: string
+          uri: string
+          url: string
+        }
+        Insert: {
+          actor_id: string
+          community_id: string
+          content?: Json | null
+          created_at?: string
+          id?: string
+          uri: string
+          url: string
+        }
+        Update: {
+          actor_id?: string
+          community_id?: string
+          content?: Json | null
+          created_at?: string
+          id?: string
+          uri?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           actor_uri: string
           auth_id: string
           created_at: string
           id: number
+          is_admin: boolean | null
         }
         Insert: {
           actor_uri: string
           auth_id: string
           created_at?: string
           id?: number
+          is_admin?: boolean | null
         }
         Update: {
           actor_uri?: string
           auth_id?: string
           created_at?: string
           id?: number
+          is_admin?: boolean | null
         }
         Relationships: []
       }
