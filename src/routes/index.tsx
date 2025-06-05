@@ -2,33 +2,26 @@ import { createAsync, query } from "@solidjs/router";
 import { For, Suspense } from "solid-js";
 import { ClientPluginExecutor } from "~/utils/client-plugin-executor";
 import { Post } from "~/models/post";
+import { getRequestEvent } from "solid-js/web";
 
-// Server function to fetch posts from API with fallback to mock data
 const getPosts = query(async () => {
   "use server";
   try {
-    const response = await fetch(new URL("/api/posts", import.meta.env.VITE_DOMAIN || "http://localhost:3000"));
+    const event = getRequestEvent();
+    const baseUrl = event ? new URL(event.request.url).origin : "http://localhost:3000";
+    const response = await fetch(`${baseUrl}/api/posts`);
     if (!response.ok) {
       console.error("Failed to fetch posts:", response.status, response.statusText);
-      return null;
+      return { mainFeed: [], sidebar: [] };
     }
     const data = await response.json();
-    return data.posts || [];
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    return null;
-  }
-}, "posts");
-
-// Server function to get plugin content
-const getPluginContent = query(async () => {
-  "use server";
-  const postsFromAPI = await getPosts();
-  
-  let transformedPosts: Post[];
-  
-  // Transform database posts to match Post interface
-    transformedPosts = postsFromAPI?.map((dbPost: any) => ({
+    const postsFromAPI = data.posts || [];
+    
+    if (!postsFromAPI.length) {
+      return { mainFeed: [], sidebar: [] };
+    }
+    
+    const transformedPosts: Post[] = postsFromAPI.map((dbPost: any) => ({
       id: dbPost.id,
       title: dbPost.content?.title || "Untitled Post",
       body: dbPost.content?.body,
@@ -40,13 +33,17 @@ const getPluginContent = query(async () => {
       downvotes: dbPost.content?.downvotes || 0,
       comments: dbPost.content?.comments || 0
     }));
-  
-  const executor = ClientPluginExecutor.getInstance();
-  return await executor.executeAllPlugins(transformedPosts);
+    
+    const executor = ClientPluginExecutor.getInstance();
+    return await executor.executeAllPlugins(transformedPosts);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    return { mainFeed: [], sidebar: [] };
+  }
 }, "plugin-content");
 
 export default function Home() {
-  const pluginContent = createAsync(() => getPluginContent());
+  const pluginContent = createAsync(() => getPosts());
 
   return (
     <div class="min-h-screen bg-background">
